@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import LoadingScreen from "@/components/layout/loading-screen";
 import AppShell from "@/components/layout/app-shell";
 import DashboardPage from "@/features/dashboard/pages/dashboard-page";
 
@@ -11,6 +12,20 @@ import SettingsPage from "@/features/settings/pages/settings-page";
 export default function App() {
   const [activePage, setActivePage] = useState("Overview");
   const [search, setSearch] = useState("");
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setIsLoading(false);
+    }, 18000);
+
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   function renderPage() {
     switch (activePage) {
