@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ReactNode } from "react";
 import Sidebar from "./sidebar";
 import Header from "./header";
@@ -18,12 +19,23 @@ export default function AppShell({
   onNavigate,
   onSearchChange,
 }: AppShellProps) {
-  return (
-    <div className="dark min-h-screen bg-zinc-900 text-foreground">
-      <div className="flex min-h-screen">
-        <Sidebar activePage={activePage} onNavigate={onNavigate} />
+  const [collapsed, setCollapsed] = useState(true);
 
-        <main className="ml-[248px] min-w-0 flex-1">
+  return (
+    <div className="dark min-h-screen bg-gradient-to-t from-zinc-900 via-black to-zinc-800 backdrop-blur-5xl text-foreground">
+      <div className="flex min-h-screen">
+        <Sidebar
+          activePage={activePage}
+          onNavigate={onNavigate}
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+        />
+
+        <main
+          className={`min-w-0 flex-1 transition-all duration-300 ease-in-out ${
+            collapsed ? "ml-[72px]" : "ml-[248px]"
+          }`}
+        >
           <Header
             activePage={activePage}
             search={search}

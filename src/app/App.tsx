@@ -18,7 +18,7 @@ export default function App() {
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       setIsLoading(false);
-    }, 18000);
+    }, 10000);
 
     return () => window.clearTimeout(timeout);
   }, []);
