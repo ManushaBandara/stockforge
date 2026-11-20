@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import type { ReactNode } from "react";
 import {
   Settings,
@@ -21,6 +22,32 @@ import {
   buttonClass,
   primaryButtonClass,
 } from "@/components/ui/page-ui";
+
+interface AppPreferences {
+  startup: boolean;
+  defaultWorkspace: string;
+  theme: string;
+  storagePath: string;
+  aiProvider: string;
+  workerLimit: string;
+  retryLimit: string;
+  notifications: boolean;
+  completionAlerts: boolean;
+  errorAlerts: boolean;
+}
+
+const DEFAULT_PREFERENCES: AppPreferences = {
+  startup: true,
+  defaultWorkspace: "Overview",
+  theme: "Dark",
+  storagePath: "D:\\StockForge\\Assets",
+  aiProvider: "Gemini",
+  workerLimit: "2",
+  retryLimit: "3",
+  notifications: true,
+  completionAlerts: true,
+  errorAlerts: true,
+};
 
 const sections = [
   { id: "general", label: "General", icon: Settings },
@@ -81,21 +108,117 @@ function Toggle({
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState("general");
-  const [theme, setTheme] = useState("Dark");
-  const [startup, setStartup] = useState(true);
-  const [notifications, setNotifications] = useState(true);
-  const [completionAlerts, setCompletionAlerts] = useState(true);
-  const [errorAlerts, setErrorAlerts] = useState(true);
-  const [workerLimit, setWorkerLimit] = useState("2");
-  const [retryLimit, setRetryLimit] = useState("3");
-  const [storagePath, setStoragePath] = useState("D:\\StockForge\\Assets");
+
+  const [theme, setTheme] = useState(DEFAULT_PREFERENCES.theme);
+  const [startup, setStartup] = useState(DEFAULT_PREFERENCES.startup);
+  const [defaultWorkspace, setDefaultWorkspace] = useState(
+    DEFAULT_PREFERENCES.defaultWorkspace,
+  );
+  const [notifications, setNotifications] = useState(
+    DEFAULT_PREFERENCES.notifications,
+  );
+  const [completionAlerts, setCompletionAlerts] = useState(
+    DEFAULT_PREFERENCES.completionAlerts,
+  );
+  const [errorAlerts, setErrorAlerts] = useState(
+    DEFAULT_PREFERENCES.errorAlerts,
+  );
+  const [workerLimit, setWorkerLimit] = useState(
+    DEFAULT_PREFERENCES.workerLimit,
+  );
+  const [retryLimit, setRetryLimit] = useState(DEFAULT_PREFERENCES.retryLimit);
+  const [storagePath, setStoragePath] = useState(
+    DEFAULT_PREFERENCES.storagePath,
+  );
+  const [aiProvider, setAiProvider] = useState(DEFAULT_PREFERENCES.aiProvider);
+
   const [saved, setSaved] = useState(false);
+  const [loadingPreferences, setLoadingPreferences] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
 
   const active = sections.find((section) => section.id === activeSection)!;
 
   function update<T>(setter: (value: T) => void, value: T) {
     setter(value);
     setSaved(false);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPreferences() {
+      try {
+        const stored = await invoke<Partial<AppPreferences> | null>(
+          "get_setting",
+          { key: "app.preferences" },
+        );
+
+        if (cancelled || stored == null) return;
+
+        const preferences = {
+          ...DEFAULT_PREFERENCES,
+          ...stored,
+        };
+
+        setStartup(preferences.startup);
+        setDefaultWorkspace(preferences.defaultWorkspace);
+        setTheme(preferences.theme);
+        setStoragePath(preferences.storagePath);
+        setAiProvider(preferences.aiProvider);
+        setWorkerLimit(preferences.workerLimit);
+        setRetryLimit(preferences.retryLimit);
+        setNotifications(preferences.notifications);
+        setCompletionAlerts(preferences.completionAlerts);
+        setErrorAlerts(preferences.errorAlerts);
+      } catch (error) {
+        if (!cancelled) {
+          setSettingsError(`Failed to load settings: ${String(error)}`);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingPreferences(false);
+        }
+      }
+    }
+
+    void loadPreferences();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleSave() {
+    const preferences: AppPreferences = {
+      startup,
+      defaultWorkspace,
+      theme,
+      storagePath,
+      aiProvider,
+      workerLimit,
+      retryLimit,
+      notifications,
+      completionAlerts,
+      errorAlerts,
+    };
+
+    setSaving(true);
+    setSaved(false);
+    setSettingsError(null);
+
+    try {
+      await invoke("set_setting", {
+        key: "app.preferences",
+        value: preferences,
+      });
+
+      setSaved(true);
+    } catch (error) {
+      setSettingsError(`Failed to save settings: ${String(error)}`);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -105,18 +228,34 @@ export default function SettingsPage() {
         title="Settings"
         description="Configure StockForge preferences, integrations, and automation."
         actions={
-          <button className={primaryButtonClass} onClick={() => setSaved(true)}>
-            <Save size={16} /> Save changes
+          <button
+            className={primaryButtonClass}
+            onClick={handleSave}
+            disabled={saving || loadingPreferences}
+          >
+            <Save size={16} />
+            {saving ? "Saving..." : "Save changes"}
           </button>
         }
       />
 
       {saved && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
-          <Check size={16} /> Settings saved in this preview session.
+          <Check size={16} />
+          Settings saved successfully to your local database.
+        </div>
+      )}
+      {loadingPreferences && (
+        <div className="mb-4 rounded-lg border border-[#303541] bg-[#17191F] px-4 py-3 text-sm text-slate-400">
+          Loading saved preferences...
         </div>
       )}
 
+      {settingsError && (
+        <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {settingsError}
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
         <Panel className="h-fit p-2">
           <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
@@ -170,7 +309,13 @@ export default function SettingsPage() {
                   label="Default workspace"
                   description="Choose the page displayed when the app opens."
                 >
-                  <select className={inputClass} defaultValue="Overview">
+                  <select
+                    className={inputClass}
+                    value={defaultWorkspace}
+                    onChange={(event) =>
+                      update(setDefaultWorkspace, event.target.value)
+                    }
+                  >
                     <option>Overview</option>
                     <option>Assets</option>
                     <option>Generation</option>
@@ -249,7 +394,13 @@ export default function SettingsPage() {
                   label="AI provider"
                   description="Provider used for metadata assistance."
                 >
-                  <select className={inputClass} defaultValue="Gemini">
+                  <select
+                    className={inputClass}
+                    value={aiProvider}
+                    onChange={(event) =>
+                      update(setAiProvider, event.target.value)
+                    }
+                  >
                     <option>Gemini</option>
                     <option>Local model (future)</option>
                   </select>
@@ -401,10 +552,7 @@ export default function SettingsPage() {
             )}
           </div>
           <div className="flex justify-end border-t border-[#272B35] px-5 py-4">
-            <button
-              className={primaryButtonClass}
-              onClick={() => setSaved(true)}
-            >
+            <button className={primaryButtonClass} onClick={handleSave}>
               <Save size={15} /> Save changes
             </button>
           </div>

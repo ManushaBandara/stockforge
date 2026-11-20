@@ -134,7 +134,7 @@ export default function DashboardPage({
             Import assets
           </button>
 
-          <button className="flex h-9 items-center gap-2 rounded-lg bg-violet-500 px-3.5 text-xs font-semibold text-white shadow-lg shadow-violet-500/15 transition-colors hover:bg-violet-400">
+          <button className="flex h-9 items-center gap-2 rounded-lg bg-red-500 px-3.5 text-xs font-semibold text-white shadow-lg shadow-red-500/15 transition-colors hover:bg-red-400">
             <Plus size={15} />
             New project
           </button>
@@ -193,7 +193,7 @@ export default function DashboardPage({
       {/* Production overview */}
       <section className="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr]">
         <div className="relative overflow-hidden rounded-xl border border-border bg-card p-6">
-          <div className="pointer-events-none absolute -right-16 -top-24 size-64 rounded-full bg-violet-500/[0.08] blur-3xl" />
+          <div className="pointer-events-none absolute -right-16 -top-24 size-64 rounded-full bg-green-500/[0.08] blur-3xl" />
 
           <div className="relative flex items-start justify-between">
             <div>
@@ -227,9 +227,9 @@ export default function DashboardPage({
             </div>
 
             <div className="flex h-2 overflow-hidden rounded-full bg-white/[0.07]">
-              <div className="w-[42%] bg-violet-500" />
-              <div className="w-[18%] bg-indigo-400" />
-              <div className="w-[8%] bg-cyan-400" />
+              <div className="w-[42%] bg-green-500" />
+              <div className="w-[18%] bg-yellow-400" />
+              <div className="w-[8%] bg-red-400" />
             </div>
 
             <div className="mt-6 grid grid-cols-3 gap-4">
