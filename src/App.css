@@ -16,6 +16,30 @@ body {
 *::-webkit-scrollbar {
   display: none;
 }
+
+/* StockForge dynamic accent */
+
+.sf-accent-bg {
+  background-color: var(--sf-accent);
+  color: var(--sf-accent-foreground);
+}
+
+.sf-accent-text {
+  color: var(--sf-accent);
+}
+
+.sf-accent-border {
+  border-color: var(--sf-accent-border);
+}
+
+.sf-accent-soft {
+  background-color: var(--sf-accent-soft);
+}
+
+.sf-accent-ring {
+  --tw-ring-color: var(--sf-accent);
+}
+
 :root {
   font-family: "Geist Variable", sans-serif;
   font-synthesis: none;

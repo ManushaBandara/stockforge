@@ -207,7 +207,7 @@ export default function AssetsPage({
               onClick={() => setFilter(item)}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                 filter === item
-                  ? "bg-[#343044] text-[#B9AEFF]"
+                  ? "sf-accent-soft text-white"
                   : "text-slate-500 hover:bg-[#222630] hover:text-slate-200"
               }`}
             >

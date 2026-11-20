@@ -27,6 +27,7 @@ interface AppPreferences {
   startup: boolean;
   defaultWorkspace: string;
   theme: string;
+  accentColor: AccentColor;
   storagePath: string;
   aiProvider: string;
   workerLimit: string;
@@ -40,6 +41,7 @@ const DEFAULT_PREFERENCES: AppPreferences = {
   startup: true,
   defaultWorkspace: "Overview",
   theme: "Dark",
+  accentColor: "violet",
   storagePath: "D:\\StockForge\\Assets",
   aiProvider: "Gemini",
   workerLimit: "2",
@@ -59,7 +61,7 @@ const sections = [
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "about", label: "About", icon: Info },
 ];
-
+import { ACCENT_COLORS, type AccentColor } from "../accent-colors";
 function Field({
   label,
   description,
@@ -97,7 +99,7 @@ function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 rounded-full transition ${checked ? "bg-[#8B7CFF]" : "bg-[#3A3F4A]"}`}
+      className={`relative h-6 w-11 rounded-full transition ${checked ? "sf-accent-bg" : "bg-[#3A3F4A]"}`}
     >
       <span
         className={`absolute top-1 size-4 rounded-full bg-white transition ${checked ? "left-6" : "left-1"}`}
@@ -116,6 +118,9 @@ export default function SettingsPage() {
   );
   const [notifications, setNotifications] = useState(
     DEFAULT_PREFERENCES.notifications,
+  );
+  const [accentColor, setAccentColor] = useState<AccentColor>(
+    DEFAULT_PREFERENCES.accentColor,
   );
   const [completionAlerts, setCompletionAlerts] = useState(
     DEFAULT_PREFERENCES.completionAlerts,
@@ -164,6 +169,7 @@ export default function SettingsPage() {
         setStartup(preferences.startup);
         setDefaultWorkspace(preferences.defaultWorkspace);
         setTheme(preferences.theme);
+        setAccentColor(preferences.accentColor);
         setStoragePath(preferences.storagePath);
         setAiProvider(preferences.aiProvider);
         setWorkerLimit(preferences.workerLimit);
@@ -194,6 +200,7 @@ export default function SettingsPage() {
       startup,
       defaultWorkspace,
       theme,
+      accentColor,
       storagePath,
       aiProvider,
       workerLimit,
@@ -220,7 +227,16 @@ export default function SettingsPage() {
       setSaving(false);
     }
   }
+  useEffect(() => {
+    const color = ACCENT_COLORS[accentColor];
 
+    const root = document.documentElement;
+
+    root.style.setProperty("--sf-accent", color.hex);
+    root.style.setProperty("--sf-accent-foreground", color.foreground);
+    root.style.setProperty("--sf-accent-soft", color.soft);
+    root.style.setProperty("--sf-accent-border", color.border);
+  }, [accentColor]);
   return (
     <div>
       <PageHeader
@@ -270,7 +286,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveSection(section.id)}
                   className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${
                     activeSection === section.id
-                      ? "bg-[#302B46] font-medium text-[#C5BCFF]"
+                      ? "sf-accent-soft font-medium text-white"
                       : "text-slate-400 hover:bg-[#222630] hover:text-white"
                   }`}
                 >
@@ -344,12 +360,67 @@ export default function SettingsPage() {
                 </Field>
                 <Field
                   label="Accent color"
-                  description="The highlight color used for primary actions and selected items."
+                  description="Choose the highlight color used throughout StockForge."
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="size-7 rounded-lg bg-[#8B7CFF]" />
-                    <span className="text-sm text-slate-300">Violet</span>
-                    <span className="text-xs text-slate-500">#8B7CFF</span>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-6 gap-2">
+                      {Object.entries(ACCENT_COLORS).map(([key, color]) => {
+                        const selected = accentColor === key;
+
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            title={color.label}
+                            aria-label={`Select ${color.label} accent`}
+                            aria-pressed={selected}
+                            onClick={() =>
+                              update(setAccentColor, key as AccentColor)
+                            }
+                            className={`flex aspect-square items-center justify-center rounded-xl border transition-all ${
+                              selected
+                                ? "border-white/70 ring-2 ring-white/20 scale-105"
+                                : "border-white/10 hover:border-white/30"
+                            }`}
+                            style={{ backgroundColor: color.hex }}
+                          >
+                            {selected && (
+                              <Check
+                                size={17}
+                                className="text-white drop-shadow"
+                                strokeWidth={3}
+                              />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex items-center gap-3 rounded-lg border border-[#303541] bg-[#17191F] px-3 py-2.5">
+                      <span
+                        className="size-5 shrink-0 rounded-md"
+                        style={{
+                          backgroundColor: ACCENT_COLORS[accentColor].hex,
+                        }}
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-slate-200">
+                          {ACCENT_COLORS[accentColor].label}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {ACCENT_COLORS[accentColor].hex}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => update(setAccentColor, "violet")}
+                        className="text-xs text-slate-500 transition hover:text-white"
+                      >
+                        Reset
+                      </button>
+                    </div>
                   </div>
                 </Field>
               </>
@@ -551,7 +622,7 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
-          <div className="flex justify-end border-t border-[#272B35] px-5 py-4">
+          <div className="flex justify-end border-t sf-accent-border px-5 py-4">
             <button className={primaryButtonClass} onClick={handleSave}>
               <Save size={15} /> Save changes
             </button>

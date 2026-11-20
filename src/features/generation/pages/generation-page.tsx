@@ -123,9 +123,9 @@ export default function GenerationPage() {
             description="Select images from your computer to prepare a production batch."
           />
           <div className="p-5">
-            <label className="flex min-h-[230px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#45405F] bg-[#171923] px-6 text-center transition hover:border-[#8B7CFF] hover:bg-[#1D1B2A]">
-              <div className="mb-4 rounded-xl border border-[#39334F] bg-[#29243D] p-4">
-                <Upload size={25} className="text-[#B5AAFF]" />
+            <label className="flex min-h-[230px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#45405F] sf-accent-soft px-6 text-center transition hover:border-[#8B7CFF] hover:bg-[#1D1B2A]">
+              <div className="mb-4 rounded-xl border border-[#39334F] sf-accent-soft p-4">
+                <Upload size={25} className="text-[#ffffff]" />
               </div>
               <p className="text-sm font-semibold text-white">
                 Drop your images here
@@ -219,7 +219,7 @@ export default function GenerationPage() {
               const StepIcon = Icon as typeof Upload;
               return (
                 <div key={number as string} className="flex gap-3">
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#29243D] text-xs font-semibold text-[#B5AAFF]">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg sf-accent-soft text-xs font-semibold text-white">
                     {number as string}
                   </div>
                   <div className="min-w-0">

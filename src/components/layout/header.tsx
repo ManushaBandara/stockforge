@@ -30,7 +30,7 @@ export default function Header({
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search assets..."
-            className="h-9 w-full rounded-lg border border-border bg-card pl-9 pr-12 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-violet-500/60"
+            className="h-9 w-full rounded-lg border border-border bg-card pl-9 pr-12 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:sf-accent-border"
           />
 
           <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-border px-1.5 py-0.5 text-[9px] text-muted-foreground">
@@ -43,7 +43,7 @@ export default function Header({
           className="relative flex size-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <Bell size={16} />
-          <span className="absolute right-2 top-2 size-1.5 rounded-full bg-violet-400" />
+          <span className="absolute right-2 top-2 size-1.5 rounded-full sf-accent-bg" />
         </button>
 
         <div className="h-6 w-px bg-border" />
@@ -52,7 +52,7 @@ export default function Header({
           aria-label="Workspace account menu"
           className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent"
         >
-          <div className="flex size-7 items-center justify-center rounded-full bg-violet-500/20 text-[10px] font-semibold text-violet-300">
+          <div className="flex size-7 items-center justify-center rounded-full sf-accent-soft text-[10px] font-semibold text-white">
             SF
           </div>
           <ChevronDown size={13} className="text-muted-foreground" />
