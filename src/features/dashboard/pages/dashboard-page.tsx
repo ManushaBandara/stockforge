@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+// temp
+import { BackendStatusCard } from "@/components/backend-status-card";
 const recentAssets = [
   {
     name: "Abstract gradient background",
@@ -138,7 +140,9 @@ export default function DashboardPage({
           </button>
         </div>
       </section>
-
+      <div className="mb-5">
+        <BackendStatusCard />
+      </div>
       {/* Statistics */}
       <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => {
