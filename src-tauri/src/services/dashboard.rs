@@ -1,8 +1,9 @@
+use crate::errors::AppResult;
 use sqlx::{Row, SqlitePool};
 
 use crate::models::dashboard::{DashboardData, DashboardPipeline, DashboardStats, RecentAsset};
 
-pub async fn get_dashboard_data(pool: &SqlitePool) -> Result<DashboardData, sqlx::Error> {
+pub async fn get_dashboard_data(pool: &SqlitePool) -> AppResult<DashboardData> {
     // KPI statistics
     let stats_row = sqlx::query(
         r#"

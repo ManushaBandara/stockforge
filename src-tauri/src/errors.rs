@@ -1,12 +1,15 @@
 use thiserror::Error;
 
+pub type AppResult<T> = Result<T, AppError>;
+
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
 
-    #[error("Internal error: {0}")]
-    Internal(String),
-}
+    #[error("Serialization error: {0}")]
+    Serialization(#[from] serde_json::Error),
 
-pub type AppResult<T> = Result<T, AppError>;
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+}
