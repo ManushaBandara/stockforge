@@ -11,7 +11,7 @@ Contributions, suggestions, bug reports, and feature requests are welcome. Every
    **bash**
 
    ```
-   git clone https://github.com/YOUR_USERNAME/StockForge.git
+   git clone https://github.com/ukihunter/StockForge.git
    ```
 
 3. Navigate to the project directory:
