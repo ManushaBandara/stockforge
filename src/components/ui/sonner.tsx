@@ -1,47 +1,55 @@
-import { useTheme } from "next-themes"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+import { Toaster as Sonner, type ToasterProps } from "sonner";
+import type { CSSProperties } from "react";
 
+import {
+  CircleCheck,
+  Info,
+  TriangleAlert,
+  CircleX,
+  LoaderCircle,
+} from "lucide-react";
+
+const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
-      className="toaster group"
+      theme="dark"
+      className="stockforge-toaster"
+      position="bottom-right"
+      closeButton
+      expand={false}
+      visibleToasts={5}
+      gap={10}
+      offset={24}
       icons={{
-        success: (
-          <CircleCheckIcon className="size-4" />
-        ),
-        info: (
-          <InfoIcon className="size-4" />
-        ),
-        warning: (
-          <TriangleAlertIcon className="size-4" />
-        ),
-        error: (
-          <OctagonXIcon className="size-4" />
-        ),
-        loading: (
-          <Loader2Icon className="size-4 animate-spin" />
-        ),
+        success: <CircleCheck size={19} strokeWidth={2.2} />,
+        error: <CircleX size={19} strokeWidth={2.2} />,
+        warning: <TriangleAlert size={19} strokeWidth={2.2} />,
+        info: <Info size={19} strokeWidth={2.2} />,
+        loading: <LoaderCircle size={19} className="animate-spin" />,
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
-        } as React.CSSProperties
+          "--normal-bg": "#171a21",
+          "--normal-text": "#f1f5f9",
+          "--normal-border": "#303642",
+          "--border-radius": "13px",
+        } as CSSProperties
       }
       toastOptions={{
+        duration: 4500,
+        ...toastOptions,
         classNames: {
-          toast: "cn-toast",
+          toast: "sf-toast",
+          title: "sf-toast-title",
+          description: "sf-toast-description",
+          closeButton: "sf-toast-close",
+          ...toastOptions?.classNames,
         },
       }}
       {...props}
     />
-  )
-}
+  );
+};
 
-export { Toaster }
+export { Toaster };
