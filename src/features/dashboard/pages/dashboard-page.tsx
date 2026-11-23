@@ -1,92 +1,76 @@
+import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+
 import {
   Activity,
   ArrowUpRight,
   CheckCircle2,
   Clock3,
   Command,
-  FileImage,
-  FolderOpen,
   Image,
   MoreHorizontal,
   Plus,
   Send,
-  Sparkles,
   Upload,
   WandSparkles,
 } from "lucide-react";
+
 import type { LucideIcon } from "lucide-react";
 
-// temp
 import { BackendStatusCard } from "@/components/backend-status-card";
-const recentAssets = [
-  {
-    name: "Abstract gradient background",
-    category: "Backgrounds",
-    date: "Nov 16, 2026",
-    status: "Ready",
-    color: "from-violet-500/40 to-blue-500/30",
-    icon: Sparkles,
-  },
-  {
-    name: "Minimal workspace concept",
-    category: "Technology",
-    date: "Nov 15, 2026",
-    status: "Processing",
-    color: "from-cyan-500/40 to-emerald-500/30",
-    icon: FolderOpen,
-  },
-  {
-    name: "Geometric shapes collection",
-    category: "Illustrations",
-    date: "Nov 14, 2026",
-    status: "Ready",
-    color: "from-orange-500/40 to-pink-500/30",
-    icon: FileImage,
-  },
-  {
-    name: "Soft natural texture",
-    category: "Textures",
-    date: "Nov 13, 2026",
-    status: "Draft",
-    color: "from-emerald-500/40 to-teal-500/30",
-    icon: Image,
-  },
-];
 
-const stats = [
-  {
-    label: "Total assets",
-    value: "128",
-    change: "+12.8%",
-    description: "vs. last month",
-    icon: Image,
-    trend: "up",
+// Types
+
+interface DashboardStats {
+  totalAssets: number;
+  readyToSubmit: number;
+  inProduction: number;
+  submitted: number;
+}
+
+interface DashboardPipeline {
+  completed: number;
+  processing: number;
+  pending: number;
+  failed: number;
+  rejected: number;
+}
+
+interface RecentAsset {
+  id: string;
+  name: string;
+  category: string;
+  status: string;
+  submissionStatus: string;
+  createdAt: string;
+}
+
+interface DashboardData {
+  stats: DashboardStats;
+  pipeline: DashboardPipeline;
+  recentAssets: RecentAsset[];
+}
+
+// Defaults
+
+const EMPTY_DASHBOARD: DashboardData = {
+  stats: {
+    totalAssets: 0,
+    readyToSubmit: 0,
+    inProduction: 0,
+    submitted: 0,
   },
-  {
-    label: "Ready to submit",
-    value: "36",
-    change: "+8.2%",
-    description: "vs. last month",
-    icon: CheckCircle2,
-    trend: "up",
+  pipeline: {
+    completed: 0,
+    processing: 0,
+    pending: 0,
+    failed: 0,
+    rejected: 0,
   },
-  {
-    label: "In production",
-    value: "14",
-    change: "4 active",
-    description: "Currently processing",
-    icon: Activity,
-    trend: "neutral",
-  },
-  {
-    label: "Submitted",
-    value: "78",
-    change: "+18.4%",
-    description: "vs. last month",
-    icon: Send,
-    trend: "up",
-  },
-];
+  recentAssets: [],
+};
+
+// Component
 
 interface DashboardPageProps {
   activePage: string;
@@ -99,11 +83,119 @@ export default function DashboardPage({
   search,
   onNavigate,
 }: DashboardPageProps) {
+  const [dashboard, setDashboard] = useState<DashboardData>(EMPTY_DASHBOARD);
+
+  const [loading, setLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+
+  // Load dashboard data from SQLite through the Tauri command
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDashboard() {
+      try {
+        setDashboardError(null);
+
+        const data = await invoke<DashboardData>("get_dashboard_data");
+
+        if (!cancelled) {
+          setDashboard(data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setDashboardError(
+            error instanceof Error ? error.message : String(error),
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadDashboard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Derived database values
+
+  const { stats, pipeline, recentAssets } = dashboard;
+
   const filteredAssets = recentAssets.filter((asset) =>
     `${asset.name} ${asset.category}`
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
+
+  const getPercentage = (value: number) =>
+    stats.totalAssets > 0
+      ? Math.min((value / stats.totalAssets) * 100, 100)
+      : 0;
+
+  const overallProgress =
+    stats.totalAssets > 0
+      ? Math.round((pipeline.completed / stats.totalAssets) * 100)
+      : 0;
+
+  // Statistics cards
+
+  const statCards = [
+    {
+      label: "Total assets",
+      value: stats.totalAssets,
+      change: "In library",
+      description: "Stored in your workspace",
+      icon: Image,
+    },
+    {
+      label: "Ready to submit",
+      value: stats.readyToSubmit,
+      change: "Ready",
+      description: "Awaiting submission",
+      icon: CheckCircle2,
+    },
+    {
+      label: "In production",
+      value: stats.inProduction,
+      change: "Active",
+      description: "Currently processing",
+      icon: Activity,
+    },
+    {
+      label: "Submitted",
+      value: stats.submitted,
+      change: "Submitted",
+      description: "Submission lifecycle",
+      icon: Send,
+    },
+  ];
+
+  // Pipeline data
+
+  const pipelineItems = [
+    {
+      label: "Completed",
+      value: pipeline.completed,
+      color: "bg-violet-500",
+    },
+    {
+      label: "Processing",
+      value: pipeline.processing,
+      color: "bg-indigo-400",
+    },
+    {
+      label: "Pending",
+      value: pipeline.pending,
+      color: "bg-cyan-400",
+    },
+  ];
+
+  // Render
 
   return (
     <>
@@ -112,6 +204,7 @@ export default function DashboardPage({
         <div>
           <div className="mb-2 flex items-center gap-2">
             <span className="size-1.5 rounded-full bg-emerald-400" />
+
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400">
               Workspace operational
             </span>
@@ -129,23 +222,45 @@ export default function DashboardPage({
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+          <button
+            type="button"
+            className="flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
             <Upload size={14} />
             Import assets
           </button>
 
-          <button className="flex h-9 items-center gap-2 rounded-lg bg-red-500 px-3.5 text-xs font-semibold text-white shadow-lg shadow-red-500/15 transition-colors hover:bg-red-400">
+          <button
+            type="button"
+            className="flex h-9 items-center gap-2 rounded-lg bg-red-500 px-3.5 text-xs font-semibold text-white shadow-lg shadow-red-500/15 transition-colors hover:bg-red-400"
+          >
             <Plus size={15} />
             New project
           </button>
         </div>
       </section>
+
+      {/* Database status */}
       <div className="mb-5">
         <BackendStatusCard />
       </div>
+
+      {/* Dashboard error */}
+      {dashboardError && (
+        <div className="mb-5 rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3">
+          <p className="text-xs font-medium text-red-400">
+            Dashboard data could not be loaded
+          </p>
+
+          <p className="mt-1 break-words text-[11px] text-muted-foreground">
+            {dashboardError}
+          </p>
+        </div>
+      )}
+
       {/* Statistics */}
       <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
+        {statCards.map((stat) => {
           const Icon = stat.icon;
 
           return (
@@ -158,26 +273,17 @@ export default function DashboardPage({
                   {stat.label}
                 </span>
 
-                <div className="flex size-8 items-center justify-center rounded-lg bg-white/[0.05] text-muted-foreground">
+                <div className="flex size-8 items-center justify-center rounded-lg sf-accent-soft text-muted-foreground">
                   <Icon size={16} />
                 </div>
               </div>
 
               <div className="flex items-end justify-between gap-2">
                 <span className="text-[28px] font-semibold tracking-tight">
-                  {stat.value}
+                  {loading ? "—" : stat.value.toLocaleString()}
                 </span>
 
-                <span
-                  className={`mb-1 flex items-center gap-1 text-[10px] font-medium ${
-                    stat.trend === "up" ? "text-emerald-400" : "text-violet-300"
-                  }`}
-                >
-                  {stat.trend === "up" ? (
-                    <ArrowUpRight size={12} />
-                  ) : (
-                    <Activity size={12} />
-                  )}
+                <span className="mb-1 text-[10px] font-medium text-muted-foreground">
                   {stat.change}
                 </span>
               </div>
@@ -192,6 +298,7 @@ export default function DashboardPage({
 
       {/* Production overview */}
       <section className="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-[1.5fr_1fr]">
+        {/* Pipeline */}
         <div className="relative overflow-hidden rounded-xl border border-border bg-card p-6">
           <div className="pointer-events-none absolute -right-16 -top-24 size-64 rounded-full bg-green-500/[0.08] blur-3xl" />
 
@@ -211,6 +318,7 @@ export default function DashboardPage({
             </div>
 
             <button
+              type="button"
               aria-label="Production overview options"
               className="rounded-lg border border-border p-2 text-muted-foreground hover:bg-accent"
             >
@@ -219,52 +327,74 @@ export default function DashboardPage({
           </div>
 
           <div className="relative mt-8">
+            {/* Overall progress */}
             <div className="mb-3 flex items-center justify-between text-xs">
               <span className="text-muted-foreground">
                 Overall production progress
               </span>
-              <span className="font-semibold">68%</span>
+
+              <span className="font-semibold">
+                {loading ? "—" : `${overallProgress}%`}
+              </span>
             </div>
 
+            {/* Progress bar */}
             <div className="flex h-2 overflow-hidden rounded-full bg-white/[0.07]">
-              <div className="w-[42%] bg-green-500" />
-              <div className="w-[18%] bg-yellow-400" />
-              <div className="w-[8%] bg-red-400" />
+              <div
+                className="bg-green-500 transition-all duration-500"
+                style={{ width: `${getPercentage(pipeline.completed)}%` }}
+              />
+
+              <div
+                className="bg-yellow-400 transition-all duration-500"
+                style={{ width: `${getPercentage(pipeline.processing)}%` }}
+              />
+
+              <div
+                className="bg-cyan-400 transition-all duration-500"
+                style={{ width: `${getPercentage(pipeline.pending)}%` }}
+              />
             </div>
 
+            {/* Pipeline stats */}
             <div className="mt-6 grid grid-cols-3 gap-4">
-              {[
-                {
-                  label: "Completed",
-                  value: "78",
-                  color: "bg-violet-500",
-                },
-                {
-                  label: "Processing",
-                  value: "14",
-                  color: "bg-indigo-400",
-                },
-                {
-                  label: "Pending",
-                  value: "36",
-                  color: "bg-cyan-400",
-                },
-              ].map((item) => (
+              {pipelineItems.map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center gap-2">
                     <span className={`size-1.5 rounded-full ${item.color}`} />
+
                     <span className="text-[10px] text-muted-foreground">
                       {item.label}
                     </span>
                   </div>
 
-                  <p className="mt-2 text-lg font-semibold">{item.value}</p>
+                  <p className="mt-2 text-lg font-semibold">
+                    {loading ? "—" : item.value.toLocaleString()}
+                  </p>
                 </div>
               ))}
+            </div>
+
+            {/* Additional counts */}
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-t border-border/60 pt-4">
+              <span className="text-[10px] text-muted-foreground">
+                Failed:{" "}
+                <span className="font-medium text-foreground">
+                  {loading ? "—" : pipeline.failed}
+                </span>
+              </span>
+
+              <span className="text-[10px] text-muted-foreground">
+                Rejected:{" "}
+                <span className="font-medium text-foreground">
+                  {loading ? "—" : pipeline.rejected}
+                </span>
+              </span>
             </div>
           </div>
         </div>
 
+        {/* Quick actions */}
         <div className="rounded-xl border border-border bg-card p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -305,12 +435,14 @@ export default function DashboardPage({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
           <div>
             <h2 className="text-sm font-semibold">Recent assets</h2>
+
             <p className="mt-1 text-[11px] text-muted-foreground">
               Your latest creative work
             </p>
           </div>
 
           <button
+            type="button"
             onClick={() => onNavigate("Assets")}
             className="text-xs font-medium text-violet-400 hover:text-violet-300"
           >
@@ -324,66 +456,71 @@ export default function DashboardPage({
               <tr className="border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground">
                 <th className="px-5 py-3 font-medium">Asset</th>
                 <th className="px-4 py-3 font-medium">Category</th>
-                <th className="px-4 py-3 font-medium">Modified</th>
+                <th className="px-4 py-3 font-medium">Created</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-5 py-3" />
               </tr>
             </thead>
 
             <tbody>
-              {filteredAssets.map((asset) => {
-                const Icon = asset.icon;
-
-                return (
-                  <tr
-                    key={asset.name}
-                    className="border-b border-border/60 last:border-0 transition-colors hover:bg-white/[0.02]"
-                  >
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex size-10 items-center justify-center rounded-lg bg-gradient-to-br ${asset.color}`}
-                        >
-                          <Icon size={17} className="text-white/90" />
-                        </div>
-
-                        <span className="text-xs font-medium">
-                          {asset.name}
-                        </span>
+              {filteredAssets.map((asset) => (
+                <tr
+                  key={asset.id}
+                  className="border-b border-border/60 last:border-0 transition-colors hover:bg-white/[0.02]"
+                >
+                  {/* Asset name */}
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/30 to-blue-500/30">
+                        <Image size={17} className="text-white/90" />
                       </div>
-                    </td>
 
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {asset.category}
-                    </td>
+                      <span className="text-xs font-medium">{asset.name}</span>
+                    </div>
+                  </td>
 
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {asset.date}
-                    </td>
+                  {/* Category */}
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {asset.category}
+                  </td>
 
-                    <td className="px-4 py-3">
-                      <StatusBadge status={asset.status} />
-                    </td>
+                  {/* Created date */}
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {formatDate(asset.createdAt)}
+                  </td>
 
-                    <td className="px-5 py-3 text-right">
-                      <button
-                        aria-label={`More options for ${asset.name}`}
-                        className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-                      >
-                        <MoreHorizontal size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                  {/* Status */}
+                  <td className="px-4 py-3">
+                    <StatusBadge status={asset.status} />
+                  </td>
 
+                  {/* Options */}
+                  <td className="px-5 py-3 text-right">
+                    <button
+                      type="button"
+                      aria-label={`More options for ${asset.name}`}
+                      className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                    >
+                      <MoreHorizontal size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {/* Empty / loading / error state */}
               {filteredAssets.length === 0 && (
                 <tr>
                   <td
                     colSpan={5}
                     className="px-5 py-10 text-center text-xs text-muted-foreground"
                   >
-                    No assets match your search.
+                    {loading
+                      ? "Loading assets..."
+                      : dashboardError
+                        ? "Unable to load assets."
+                        : search
+                          ? "No assets match your search."
+                          : "No assets in your library yet. Import your first assets to get started."}
                   </td>
                 </tr>
               )}
@@ -392,6 +529,7 @@ export default function DashboardPage({
         </div>
       </section>
 
+      {/* Footer */}
       <footer className="mt-6 flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground">
         <span>StockForge · Local creative workspace</span>
 
@@ -404,6 +542,8 @@ export default function DashboardPage({
   );
 }
 
+// Quick action component
+
 function QuickAction({
   icon: Icon,
   title,
@@ -414,13 +554,17 @@ function QuickAction({
   description: string;
 }) {
   return (
-    <button className="group flex w-full items-center gap-3 rounded-lg border border-border/70 p-3 text-left transition-colors hover:border-violet-500/40 hover:bg-violet-500/[0.04]">
+    <button
+      type="button"
+      className="group flex w-full items-center gap-3 rounded-lg border border-border/70 p-3 text-left transition-colors hover:border-violet-500/40 hover:bg-violet-500/[0.04]"
+    >
       <div className="flex size-9 items-center justify-center rounded-lg bg-white/[0.05] text-muted-foreground transition-colors group-hover:bg-violet-500/15 group-hover:text-violet-300">
         <Icon size={16} />
       </div>
 
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium">{title}</p>
+
         <p className="mt-0.5 text-[10px] text-muted-foreground">
           {description}
         </p>
@@ -434,21 +578,73 @@ function QuickAction({
   );
 }
 
+// Status badge
+
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    Ready: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
-    Processing: "border-blue-500/20 bg-blue-500/10 text-blue-400",
-    Draft: "border-white/10 bg-white/[0.05] text-muted-foreground",
+    imported: "border-white/10 bg-white/[0.05] text-muted-foreground",
+
+    processing: "border-blue-500/20 bg-blue-500/10 text-blue-400",
+
+    metadata_pending: "border-blue-500/20 bg-blue-500/10 text-blue-400",
+
+    metadata_review: "border-amber-500/20 bg-amber-500/10 text-amber-400",
+
+    ready_to_submit: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
+
+    queued: "border-cyan-500/20 bg-cyan-500/10 text-cyan-400",
+
+    submitting: "border-violet-500/20 bg-violet-500/10 text-violet-400",
+
+    submitted: "border-sky-500/20 bg-sky-500/10 text-sky-400",
+
+    published: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
+
+    rejected: "border-orange-500/20 bg-orange-500/10 text-orange-400",
+
+    failed: "border-red-500/20 bg-red-500/10 text-red-400",
+
+    archived: "border-white/10 bg-white/[0.03] text-muted-foreground",
   };
+
+  const label = status.replace(/_/g, " ");
+
+  const activeStatuses = [
+    "processing",
+    "metadata_pending",
+    "queued",
+    "submitting",
+  ];
 
   return (
     <span
-      className={`inline-flex items-center rounded-md border px-2 py-1 text-[10px] font-medium ${
-        styles[status] ?? styles.Draft
+      className={`inline-flex items-center rounded-md border px-2 py-1 text-[10px] font-medium capitalize ${
+        styles[status] ?? styles.imported
       }`}
     >
-      {status === "Processing" && <Clock3 size={11} className="mr-1.5" />}
-      {status}
+      {activeStatuses.includes(status) && (
+        <Clock3 size={11} className="mr-1.5" />
+      )}
+
+      {status === "published" && <CheckCircle2 size={11} className="mr-1.5" />}
+
+      {label}
     </span>
   );
+}
+
+// Date formatting
+
+function formatDate(dateString: string): string {
+  if (!dateString) return "—";
+
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }

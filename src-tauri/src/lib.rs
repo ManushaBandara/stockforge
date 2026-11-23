@@ -23,6 +23,7 @@ pub fn run() {
             commands::system::get_database_status,
             commands::settings::get_setting,
             commands::settings::set_setting,
+            commands::dashboard::get_dashboard_data,
         ])
         .run(tauri::generate_context!())
         .expect("Failed to run StockForge");
