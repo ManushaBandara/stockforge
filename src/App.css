@@ -191,3 +191,296 @@ body {
     cursor: pointer;
   }
 }
+
+
+/* ==========================================
+   STOCKFORGE - PREMIUM NOTIFICATIONS
+========================================== */
+
+.stockforge-toaster {
+  --sf-bg: #171a21;
+  --sf-border: #303642;
+  --sf-text: #f1f5f9;
+  --sf-muted: #929baa;
+}
+
+/* Notification card */
+
+[data-sonner-toast] {
+  box-sizing: border-box !important;
+
+  width: 350px !important;
+  min-height: 82px !important;
+
+  padding: 15px 42px 15px 15px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 13px !important;
+
+  background: #171a21 !important;
+  background-color: #171a21 !important;
+  color: #f1f5f9 !important;
+
+  border: 1px solid #303642 !important;
+  border-radius: 13px !important;
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.32),
+    0 2px 6px rgba(0, 0, 0, 0.18) !important;
+
+  overflow: hidden !important;
+
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease !important;
+}
+
+/* Keep Sonner's native stack positioning.
+   Do not override transform, position or z-index. */
+
+/* Icon */
+
+[data-sonner-toast] [data-icon] {
+  width: 39px !important;
+  height: 39px !important;
+  min-width: 39px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border-radius: 11px !important;
+  margin: 0 !important;
+
+  background: rgba(255, 255, 255, 0.055) !important;
+}
+
+/* Content */
+
+[data-sonner-toast] [data-content] {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 4px !important;
+
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+/* Title */
+
+[data-sonner-toast] [data-title] {
+  color: #f1f5f9 !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 1.4 !important;
+}
+
+/* Description */
+
+[data-sonner-toast] [data-description] {
+  color: #929baa !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+}
+
+/* Success */
+
+[data-sonner-toast][data-type="success"] {
+  border-left: 3px solid #34d399 !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: #34d399 !important;
+  background: rgba(52, 211, 153, 0.12) !important;
+}
+
+/* Error */
+
+[data-sonner-toast][data-type="error"] {
+  border-left: 3px solid #fb7185 !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: #fb7185 !important;
+  background: rgba(251, 113, 133, 0.12) !important;
+}
+
+/* Warning */
+
+[data-sonner-toast][data-type="warning"] {
+  border-left: 3px solid #fbbf24 !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-icon] {
+  color: #fbbf24 !important;
+  background: rgba(251, 191, 36, 0.12) !important;
+}
+
+/* Info */
+
+[data-sonner-toast][data-type="info"] {
+  border-left: 3px solid #60a5fa !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-icon] {
+  color: #60a5fa !important;
+  background: rgba(96, 165, 250, 0.12) !important;
+}
+
+/* Loading */
+
+[data-sonner-toast][data-type="loading"] {
+  border-left: 3px solid #a78bfa !important;
+}
+
+[data-sonner-toast][data-type="loading"] [data-icon] {
+  color: #a78bfa !important;
+  background: rgba(167, 139, 250, 0.12) !important;
+}
+
+/* Close button */
+
+[data-sonner-toast] [data-close-button] {
+  position: absolute !important;
+  top: 9px !important;
+  right: 9px !important;
+  left: auto !important;
+
+  width: 23px !important;
+  height: 23px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  color: #929baa !important;
+  background: transparent !important;
+
+  border: none !important;
+  border-radius: 6px !important;
+
+  opacity: 0.65 !important;
+
+  transition: all 160ms ease !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.09) !important;
+  opacity: 1 !important;
+}
+
+/* Hover */
+
+[data-sonner-toast]:hover {
+  border-color: #465061 !important;
+
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.025) !important;
+}
+
+/* Responsive */
+
+@media (max-width: 480px) {
+  [data-sonner-toast] {
+    width: calc(100vw - 32px) !important;
+  }
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast] {
+    transition: none !important;
+  }
+}
+
+
+/* ==========================================
+   STOCKFORGE - ELASTIC STACK ANIMATIONS
+========================================== */
+
+/* New notification: enter from right with elastic spring */
+
+[data-sonner-toast][data-mounted="true"] {
+  animation: sf-toast-elastic-enter 650ms
+    cubic-bezier(0.16, 1.36, 0.42, 1) both !important;
+}
+
+/* Use individual translate so Sonner's stack transform
+   remains untouched */
+
+@keyframes sf-toast-elastic-enter {
+  0% {
+    translate: 115% 0;
+    opacity: 0;
+  }
+
+  65% {
+    translate: -7% 0;
+    opacity: 1;
+  }
+
+  82% {
+    translate: 3% 0;
+  }
+
+  93% {
+    translate: -1.5% 0;
+  }
+
+  100% {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+
+/* Dismiss: elastic slide back to right */
+
+[data-sonner-toast][data-removed="true"] {
+  animation: sf-toast-elastic-exit 380ms
+    cubic-bezier(0.55, 0, 0.85, 0.35) both !important;
+  pointer-events: none !important;
+}
+
+@keyframes sf-toast-elastic-exit {
+  0% {
+    translate: 0 0;
+    opacity: 1;
+  }
+
+  35% {
+    translate: -4% 0;
+    opacity: 1;
+  }
+
+  100% {
+    translate: 115% 0;
+    opacity: 0;
+  }
+}
+
+/* Smooth movement when stack positions change */
+
+[data-sonner-toast] {
+  transition:
+    transform 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 250ms ease,
+    box-shadow 200ms ease !important;
+}
+
+/* Respect reduced motion preferences */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast],
+  [data-sonner-toast][data-mounted="true"],
+  [data-sonner-toast][data-removed="true"] {
+    animation: none !important;
+    transition: none !important;
+    translate: none !important;
+  }
+}

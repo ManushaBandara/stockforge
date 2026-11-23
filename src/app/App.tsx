@@ -8,6 +8,7 @@ import GenerationPage from "@/features/generation/pages/generation-page";
 import MetadataPage from "@/features/metadata/pages/metadata-page";
 import SubmissionPage from "@/features/submission/pages/submission-page";
 import SettingsPage from "@/features/settings/pages/settings-page";
+import NotificationToaster from "@/features/notifications/components/notification-toaster";
 
 export default function App() {
   const [activePage, setActivePage] = useState("Overview");
@@ -24,7 +25,12 @@ export default function App() {
   }, []);
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return (
+      <>
+        <NotificationToaster />
+        <LoadingScreen />
+      </>
+    );
   }
 
   function renderPage() {
@@ -57,6 +63,9 @@ export default function App() {
   }
 
   return (
+  <>
+    <NotificationToaster />
+
     <AppShell
       activePage={activePage}
       search={search}
@@ -65,5 +74,6 @@ export default function App() {
     >
       {renderPage()}
     </AppShell>
-  );
+  </>
+);
 }
