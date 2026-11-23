@@ -100,7 +100,7 @@ export default function AssetsPage({
 }) {
   const [search, setSearch] = useState(initialSearch);
   const [filter, setFilter] = useState("All");
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<"grid" | "list">("list");
   const [selected, setSelected] = useState<
     (typeof initialAssets)[number] | null
   >(null);
@@ -156,7 +156,7 @@ export default function AssetsPage({
           ["Processing", "32"],
           ["Published", "684"],
         ].map(([label, value]) => (
-          <Panel key={label} className="px-4 py-3">
+          <Panel key={label} className="px-4 py-3 bg-card">
             <p className="text-xs text-slate-500">{label}</p>
             <p className="mt-1 text-xl font-semibold text-white">{value}</p>
           </Panel>
@@ -164,20 +164,20 @@ export default function AssetsPage({
       </div>
 
       <Panel>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#272B35] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-card border-[#272B35] p-4">
           <div className="relative min-w-[220px] flex-1">
             <Search
               size={16}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
             />
             <input
-              className={`${inputClass} pl-9`}
+              className={`${inputClass} pl-9 bg-card`}
               placeholder="Search assets..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ">
             <button className={buttonClass} onClick={() => setFilter("All")}>
               <Filter size={15} /> Filters
             </button>
@@ -200,7 +200,7 @@ export default function AssetsPage({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 border-b border-[#272B35] px-4 py-3">
+        <div className="flex flex-wrap gap-2 border-b bg-card border-[#272B35] px-4 py-3">
           {filters.map((item) => (
             <button
               key={item}
@@ -216,7 +216,7 @@ export default function AssetsPage({
           ))}
         </div>
 
-        <div className="p-4">
+        <div className="p-4 bg-card">
           {assets.length === 0 ? (
             <div className="py-16 text-center">
               <Image size={30} className="mx-auto text-slate-600" />
@@ -232,7 +232,7 @@ export default function AssetsPage({
               {assets.map((asset) => (
                 <div
                   key={asset.id}
-                  className="group overflow-hidden rounded-xl border border-[#2B303B] bg-[#151820]"
+                  className="group overflow-hidden rounded-xl border border-[#2B303B] bg-card"
                 >
                   <div
                     className={`relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br ${asset.color}`}

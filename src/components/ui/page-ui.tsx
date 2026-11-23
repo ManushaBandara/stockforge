@@ -42,9 +42,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section
-      className={`rounded-xl border border-[#272B35] bg-[#191C23] ${className}`}
-    >
+    <section className={`rounded-xl border bg-card border-border ${className}`}>
       {children}
     </section>
   );
@@ -60,7 +58,7 @@ export function PanelHeading({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#272B35] px-5 py-4">
+    <div className="flex flex-wrap items-center justify-between gap-3 bg-card border-border border-b  px-5 py-4">
       <div>
         <h2 className="text-sm font-semibold text-white">{title}</h2>
         {description && (
@@ -84,7 +82,7 @@ export function StatCard({
   icon: LucideIcon;
 }) {
   return (
-    <Panel className="p-4">
+    <Panel className="p-4 bg-card border-border">
       <div className="flex items-center justify-between">
         <span className="text-sm text-slate-400">{label}</span>
         <div className="rounded-lg border border-[#343044] sf-accent-soft p-2">

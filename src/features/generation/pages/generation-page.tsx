@@ -89,7 +89,7 @@ export default function GenerationPage() {
         }
       />
 
-      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 ">
         <StatCard
           label="Total batches"
           value="24"
@@ -116,13 +116,13 @@ export default function GenerationPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_1fr] ">
         <Panel>
           <PanelHeading
             title="Import assets"
             description="Select images from your computer to prepare a production batch."
           />
-          <div className="p-5">
+          <div className="p-5 bg-card border-border">
             <label className="flex min-h-[230px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#45405F] sf-accent-soft px-6 text-center transition hover:border-[#8B7CFF] hover:bg-[#1D1B2A]">
               <div className="mb-4 rounded-xl border border-[#39334F] sf-accent-soft p-4">
                 <Upload size={25} className="text-[#ffffff]" />
