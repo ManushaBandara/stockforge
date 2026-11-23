@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { ReactNode } from "react";
@@ -13,7 +14,14 @@ import {
   Save,
   FolderOpen,
   Check,
+  CheckCircle2,
+  CircleX,
+  TriangleAlert,
+  LoaderCircle,
+  Layers3,
+  X,
 } from "lucide-react";
+
 import {
   PageHeader,
   Panel,
@@ -22,6 +30,9 @@ import {
   buttonClass,
   primaryButtonClass,
 } from "@/components/ui/page-ui";
+
+import { notify } from "@/features/notifications/lib/notification";
+import { ACCENT_COLORS, type AccentColor } from "../accent-colors";
 
 interface AppPreferences {
   startup: boolean;
@@ -61,7 +72,7 @@ const sections = [
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "about", label: "About", icon: Info },
 ];
-import { ACCENT_COLORS, type AccentColor } from "../accent-colors";
+
 function Field({
   label,
   description,
@@ -81,6 +92,7 @@ function Field({
           </p>
         )}
       </div>
+
       <div className="w-full sm:max-w-xs">{children}</div>
     </div>
   );
@@ -99,10 +111,14 @@ function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 rounded-full transition ${checked ? "sf-accent-bg" : "bg-[#3A3F4A]"}`}
+      className={`relative h-6 w-11 rounded-full transition ${
+        checked ? "sf-accent-bg" : "bg-[#3A3F4A]"
+      }`}
     >
       <span
-        className={`absolute top-1 size-4 rounded-full bg-white transition ${checked ? "left-6" : "left-1"}`}
+        className={`absolute top-1 size-4 rounded-full bg-white transition ${
+          checked ? "left-6" : "left-1"
+        }`}
       />
     </button>
   );
@@ -113,40 +129,56 @@ export default function SettingsPage() {
 
   const [theme, setTheme] = useState(DEFAULT_PREFERENCES.theme);
   const [startup, setStartup] = useState(DEFAULT_PREFERENCES.startup);
+
   const [defaultWorkspace, setDefaultWorkspace] = useState(
     DEFAULT_PREFERENCES.defaultWorkspace,
   );
+
   const [notifications, setNotifications] = useState(
     DEFAULT_PREFERENCES.notifications,
   );
+
   const [accentColor, setAccentColor] = useState<AccentColor>(
     DEFAULT_PREFERENCES.accentColor,
   );
+
   const [completionAlerts, setCompletionAlerts] = useState(
     DEFAULT_PREFERENCES.completionAlerts,
   );
+
   const [errorAlerts, setErrorAlerts] = useState(
     DEFAULT_PREFERENCES.errorAlerts,
   );
+
   const [workerLimit, setWorkerLimit] = useState(
     DEFAULT_PREFERENCES.workerLimit,
   );
-  const [retryLimit, setRetryLimit] = useState(DEFAULT_PREFERENCES.retryLimit);
+
+  const [retryLimit, setRetryLimit] = useState(
+    DEFAULT_PREFERENCES.retryLimit,
+  );
+
   const [storagePath, setStoragePath] = useState(
     DEFAULT_PREFERENCES.storagePath,
   );
-  const [aiProvider, setAiProvider] = useState(DEFAULT_PREFERENCES.aiProvider);
 
-  const [saved, setSaved] = useState(false);
+  const [aiProvider, setAiProvider] = useState(
+    DEFAULT_PREFERENCES.aiProvider,
+  );
+
   const [loadingPreferences, setLoadingPreferences] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [settingsError, setSettingsError] = useState<string | null>(null);
 
-  const active = sections.find((section) => section.id === activeSection)!;
+  const [loadingToastId, setLoadingToastId] = useState<
+    string | number | undefined
+  >();
+
+  const active = sections.find(
+    (section) => section.id === activeSection,
+  )!;
 
   function update<T>(setter: (value: T) => void, value: T) {
     setter(value);
-    setSaved(false);
   }
 
   useEffect(() => {
@@ -159,7 +191,11 @@ export default function SettingsPage() {
           { key: "app.preferences" },
         );
 
-        if (cancelled || stored == null) return;
+        if (cancelled) return;
+
+        if (stored == null) {
+          return;
+        }
 
         const preferences = {
           ...DEFAULT_PREFERENCES,
@@ -179,7 +215,9 @@ export default function SettingsPage() {
         setErrorAlerts(preferences.errorAlerts);
       } catch (error) {
         if (!cancelled) {
-          setSettingsError(`Failed to load settings: ${String(error)}`);
+          notify.error("Failed to load settings", {
+            description: String(error),
+          });
         }
       } finally {
         if (!cancelled) {
@@ -211,8 +249,6 @@ export default function SettingsPage() {
     };
 
     setSaving(true);
-    setSaved(false);
-    setSettingsError(null);
 
     try {
       await invoke("set_setting", {
@@ -220,16 +256,59 @@ export default function SettingsPage() {
         value: preferences,
       });
 
-      setSaved(true);
+      notify.success("Settings saved successfully!", {
+        description: "Your preferences have been updated.",
+      });
     } catch (error) {
-      setSettingsError(`Failed to save settings: ${String(error)}`);
+      notify.error("Failed to save settings", {
+        description: String(error),
+      });
     } finally {
       setSaving(false);
     }
   }
+
+  // Notification testing functions
+
+  function testMultipleNotifications() {
+    notify.success("Changes saved successfully");
+    notify.error("Unable to connect to the server");
+    notify.warning("Your session will expire soon");
+    notify.info("A new update is available");
+  }
+
+  function startLoadingNotification() {
+    if (loadingToastId !== undefined) return;
+
+    const id = notify.loading("Processing your request...", {
+      description: "Please wait while we complete this operation.",
+      duration: Infinity,
+    });
+
+    setLoadingToastId(id);
+  }
+
+  function completeLoadingNotification() {
+    if (loadingToastId === undefined) return;
+
+    notify.dismiss(loadingToastId);
+
+    notify.success("Process completed!", {
+      description: "Your operation was completed successfully.",
+    });
+
+    setLoadingToastId(undefined);
+  }
+
+  function dismissLoadingNotification() {
+    if (loadingToastId === undefined) return;
+
+    notify.dismiss(loadingToastId);
+    setLoadingToastId(undefined);
+  }
+
   useEffect(() => {
     const color = ACCENT_COLORS[accentColor];
-
     const root = document.documentElement;
 
     root.style.setProperty("--sf-accent", color.hex);
@@ -237,6 +316,7 @@ export default function SettingsPage() {
     root.style.setProperty("--sf-accent-soft", color.soft);
     root.style.setProperty("--sf-accent-border", color.border);
   }, [accentColor]);
+
   return (
     <div>
       <PageHeader
@@ -255,31 +335,22 @@ export default function SettingsPage() {
         }
       />
 
-      {saved && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
-          <Check size={16} />
-          Settings saved successfully to your local database.
-        </div>
-      )}
       {loadingPreferences && (
         <div className="mb-4 rounded-lg border border-[#303541] bg-[#17191F] px-4 py-3 text-sm text-slate-400">
           Loading saved preferences...
         </div>
       )}
 
-      {settingsError && (
-        <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          {settingsError}
-        </div>
-      )}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
         <Panel className="h-fit p-2">
           <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
             Preferences
           </p>
+
           <div className="space-y-1">
             {sections.map((section) => {
               const Icon = section.icon;
+
               return (
                 <button
                   key={section.id}
@@ -303,6 +374,7 @@ export default function SettingsPage() {
             title={active.label}
             description={`Manage your ${active.label.toLowerCase()} preferences.`}
           />
+
           <div className="px-5 py-2">
             {activeSection === "general" && (
               <>
@@ -310,8 +382,13 @@ export default function SettingsPage() {
                   label="Application name"
                   description="The name displayed in the desktop application."
                 >
-                  <input className={inputClass} value="StockForge" readOnly />
+                  <input
+                    className={inputClass}
+                    value="StockForge"
+                    readOnly
+                  />
                 </Field>
+
                 <Field
                   label="Launch on startup"
                   description="Open StockForge when you sign in to your computer."
@@ -321,6 +398,7 @@ export default function SettingsPage() {
                     onChange={(value) => update(setStartup, value)}
                   />
                 </Field>
+
                 <Field
                   label="Default workspace"
                   description="Choose the page displayed when the app opens."
@@ -358,6 +436,7 @@ export default function SettingsPage() {
                     <option>System</option>
                   </select>
                 </Field>
+
                 <Field
                   label="Accent color"
                   description="Choose the highlight color used throughout StockForge."
@@ -440,6 +519,7 @@ export default function SettingsPage() {
                         update(setStoragePath, event.target.value)
                       }
                     />
+
                     <button
                       className={buttonClass}
                       aria-label="Browse storage directory"
@@ -448,6 +528,7 @@ export default function SettingsPage() {
                     </button>
                   </div>
                 </Field>
+
                 <Field
                   label="Database"
                   description="StockForge's local application database."
@@ -476,6 +557,7 @@ export default function SettingsPage() {
                     <option>Local model (future)</option>
                   </select>
                 </Field>
+
                 <Field
                   label="API key"
                   description="Your provider key should be stored securely, not in plain-text configuration."
@@ -487,6 +569,7 @@ export default function SettingsPage() {
                     disabled
                   />
                 </Field>
+
                 <Field
                   label="Model"
                   description="The text-generation model used for metadata."
@@ -506,8 +589,13 @@ export default function SettingsPage() {
                   label="Browser engine"
                   description="Browser used for assisted Adobe Stock workflows."
                 >
-                  <input className={inputClass} value="Chromium" readOnly />
+                  <input
+                    className={inputClass}
+                    value="Chromium"
+                    readOnly
+                  />
                 </Field>
+
                 <Field
                   label="Browser profile"
                   description="A dedicated profile keeps the automation session separate."
@@ -540,6 +628,7 @@ export default function SettingsPage() {
                     <option value="4">4 workers</option>
                   </select>
                 </Field>
+
                 <Field
                   label="Retry limit"
                   description="Number of retries for recoverable operations."
@@ -571,6 +660,7 @@ export default function SettingsPage() {
                     onChange={(value) => update(setNotifications, value)}
                   />
                 </Field>
+
                 <Field
                   label="Task completion"
                   description="Notify when a production task finishes."
@@ -580,6 +670,7 @@ export default function SettingsPage() {
                     onChange={(value) => update(setCompletionAlerts, value)}
                   />
                 </Field>
+
                 <Field
                   label="Errors and failures"
                   description="Notify when an operation needs attention."
@@ -589,6 +680,196 @@ export default function SettingsPage() {
                     onChange={(value) => update(setErrorAlerts, value)}
                   />
                 </Field>
+
+                {/* Notification testing */}
+
+                <div className="border-t border-[#272B35] py-5">
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2">
+                      <Bell size={16} className="sf-accent-text" />
+                      <h3 className="text-sm font-semibold text-slate-200">
+                        Notification testing
+                      </h3>
+                    </div>
+
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      Test notification types, appearance and behavior.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        notify.success("Changes saved successfully", {
+                          description: "Your settings have been updated.",
+                        })
+                      }
+                      className="flex items-center gap-3 rounded-lg border border-[#303541] bg-[#17191F] p-3 text-left transition hover:border-emerald-500/40 hover:bg-[#1C2423]"
+                    >
+                      <CheckCircle2
+                        size={19}
+                        className="shrink-0 text-emerald-400"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-slate-200">
+                          Success
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Test successful notifications
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        notify.error("Something went wrong", {
+                          description:
+                            "Unable to complete your request. Please try again.",
+                        })
+                      }
+                      className="flex items-center gap-3 rounded-lg border border-[#303541] bg-[#17191F] p-3 text-left transition hover:border-rose-500/40 hover:bg-[#251C22]"
+                    >
+                      <CircleX
+                        size={19}
+                        className="shrink-0 text-rose-400"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-slate-200">
+                          Error
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Test error notifications
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        notify.warning("Storage almost full", {
+                          description:
+                            "You are using 90% of your available storage.",
+                        })
+                      }
+                      className="flex items-center gap-3 rounded-lg border border-[#303541] bg-[#17191F] p-3 text-left transition hover:border-amber-500/40 hover:bg-[#252219]"
+                    >
+                      <TriangleAlert
+                        size={19}
+                        className="shrink-0 text-amber-400"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-slate-200">
+                          Warning
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Test warning notifications
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        notify.info("New update available", {
+                          description:
+                            "A new version of StockForge is ready.",
+                        })
+                      }
+                      className="flex items-center gap-3 rounded-lg border border-[#303541] bg-[#17191F] p-3 text-left transition hover:border-blue-500/40 hover:bg-[#1C222B]"
+                    >
+                      <Info
+                        size={19}
+                        className="shrink-0 text-blue-400"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-slate-200">
+                          Information
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Test informational notifications
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Loading notification */}
+
+                  <div className="mt-5 rounded-lg border border-[#303541] bg-[#17191F] p-4">
+                    <div className="flex items-center gap-2">
+                      <LoaderCircle
+                        size={17}
+                        className="text-violet-400"
+                      />
+                      <p className="text-sm font-medium text-slate-200">
+                        Loading notification
+                      </p>
+                    </div>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Test persistent loading notifications and their
+                      completion behavior.
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={startLoadingNotification}
+                        disabled={loadingToastId !== undefined}
+                        className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
+                      >
+                        <LoaderCircle size={14} />
+                        Start loading
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={completeLoadingNotification}
+                        disabled={loadingToastId === undefined}
+                        className={`${primaryButtonClass} disabled:cursor-not-allowed disabled:opacity-40`}
+                      >
+                        <Check size={14} />
+                        Complete
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={dismissLoadingNotification}
+                        disabled={loadingToastId === undefined}
+                        className={`${buttonClass} disabled:cursor-not-allowed disabled:opacity-40`}
+                      >
+                        <X size={14} />
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Stack and animation test */}
+
+                  <div className="mt-4 rounded-lg border border-[#303541] bg-[#17191F] p-4">
+                    <div className="flex items-center gap-2">
+                      <Layers3 size={17} className="sf-accent-text" />
+                      <p className="text-sm font-medium text-slate-200">
+                        Stack & animation
+                      </p>
+                    </div>
+
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      Trigger multiple notifications together to test
+                      stacking, spacing and entrance animations.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={testMultipleNotifications}
+                      className={`${primaryButtonClass} mt-4`}
+                    >
+                      <Layers3 size={15} />
+                      Trigger multiple notifications
+                    </button>
+                  </div>
+                </div>
               </>
             )}
 
@@ -598,6 +879,7 @@ export default function SettingsPage() {
                   <div className="flex size-12 items-center justify-center rounded-xl bg-[#302B46]">
                     <Sparkles size={24} className="text-[#B9AEFF]" />
                   </div>
+
                   <div>
                     <h3 className="font-semibold text-white">StockForge</h3>
                     <p className="text-xs text-slate-500">
@@ -605,15 +887,18 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 </div>
+
                 <div className="space-y-3 rounded-lg border border-[#303541] bg-[#111318] p-4 text-xs">
                   <div className="flex justify-between">
                     <span className="text-slate-500">Version</span>
                     <span className="text-slate-200">0.1.0</span>
                   </div>
+
                   <div className="flex justify-between">
                     <span className="text-slate-500">Desktop framework</span>
                     <span className="text-slate-200">Tauri 2</span>
                   </div>
+
                   <div className="flex justify-between">
                     <span className="text-slate-500">Frontend</span>
                     <span className="text-slate-200">React + TypeScript</span>
@@ -622,9 +907,15 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+
           <div className="flex justify-end border-t sf-accent-border px-5 py-4">
-            <button className={primaryButtonClass} onClick={handleSave}>
-              <Save size={15} /> Save changes
+            <button
+              className={primaryButtonClass}
+              onClick={handleSave}
+              disabled={saving || loadingPreferences}
+            >
+              <Save size={15} />
+              {saving ? "Saving..." : "Save changes"}
             </button>
           </div>
         </Panel>
