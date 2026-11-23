@@ -25,3 +25,5 @@ dist-ssr
 
 
 dev-db/*
+stockforge.db-shm
+stockforge.db-wal
