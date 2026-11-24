@@ -24,6 +24,13 @@ pub fn run() {
             commands::settings::get_setting,
             commands::settings::set_setting,
             commands::dashboard::get_dashboard_data,
+            commands::credentials::save_gemini_api_key,
+            commands::credentials::has_gemini_api_key,
+            commands::credentials::delete_gemini_api_key,
+            commands::ai::generate_ai_content,
+            commands::ai::test_gemini_connection,
+            commands::stock_ideas::create_stock_idea,
+            commands::stock_ideas::get_stock_ideas,
         ])
         .run(tauri::generate_context!())
         .expect("Failed to run StockForge");

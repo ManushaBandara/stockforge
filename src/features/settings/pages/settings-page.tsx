@@ -166,6 +166,11 @@ export default function SettingsPage() {
     DEFAULT_PREFERENCES.aiProvider,
   );
 
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [hasGeminiApiKey, setHasGeminiApiKey] = useState(false);
+  const [savingApiKey, setSavingApiKey] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+
   const [loadingPreferences, setLoadingPreferences] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -233,6 +238,32 @@ export default function SettingsPage() {
     };
   }, []);
 
+  useEffect(() => {
+  let cancelled = false;
+
+  async function checkGeminiApiKey() {
+    try {
+      const exists = await invoke<boolean>("has_gemini_api_key");
+
+      if (!cancelled) {
+        setHasGeminiApiKey(exists);
+      }
+    } catch (error) {
+      if (!cancelled) {
+        notify.error("Failed to check Gemini API key", {
+          description: String(error),
+        });
+      }
+    }
+  }
+
+  void checkGeminiApiKey();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
+
   async function handleSave() {
     const preferences: AppPreferences = {
       startup,
@@ -267,6 +298,74 @@ export default function SettingsPage() {
       setSaving(false);
     }
   }
+
+  async function handleSaveGeminiKey() {
+  if (!geminiApiKey.trim()) {
+    notify.error("Please enter your Gemini API key.");
+    return;
+  }
+
+  setSavingApiKey(true);
+
+  try {
+    await invoke("save_gemini_api_key", {
+      apiKey: geminiApiKey.trim(),
+    });
+
+    setHasGeminiApiKey(true);
+    setGeminiApiKey("");
+
+    notify.success("Gemini API key saved securely.");
+  } catch (error) {
+    notify.error("Failed to save Gemini API key", {
+      description: String(error),
+    });
+  } finally {
+    setSavingApiKey(false);
+  }
+}
+
+async function handleDeleteGeminiKey() {
+  setSavingApiKey(true);
+
+  try {
+    await invoke("delete_gemini_api_key");
+
+    setHasGeminiApiKey(false);
+    setGeminiApiKey("");
+
+    notify.success("Gemini API key removed.");
+  } catch (error) {
+    notify.error("Failed to remove Gemini API key", {
+      description: String(error),
+    });
+  } finally {
+    setSavingApiKey(false);
+  }
+}
+
+async function handleTestGeminiConnection() {
+  if (!hasGeminiApiKey) {
+    notify.error("Gemini API key is not configured.");
+    return;
+  }
+
+  setTestingConnection(true);
+
+  try {
+    const response = await invoke<string>("test_gemini_connection");
+
+    notify.success("Gemini connection successful!", {
+      description: response,
+    });
+  } catch (error) {
+    notify.error("Gemini connection failed", {
+      description: String(error),
+    });
+  } finally {
+    setTestingConnection(false);
+  }
+}
 
   // Notification testing functions
 
@@ -540,6 +639,7 @@ export default function SettingsPage() {
               </>
             )}
 
+            
             {activeSection === "ai" && (
               <>
                 <Field
@@ -559,15 +659,75 @@ export default function SettingsPage() {
                 </Field>
 
                 <Field
-                  label="API key"
-                  description="Your provider key should be stored securely, not in plain-text configuration."
+                  label="Gemini API key"
+                  description="Your API key is stored securely in Windows Credential Manager."
                 >
-                  <input
-                    className={inputClass}
-                    type="password"
-                    placeholder="Configure API key later"
-                    disabled
-                  />
+                  <div className="space-y-3">
+                    {hasGeminiApiKey && (
+                      <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
+                        <CheckCircle2 size={16} className="text-emerald-400" />
+                        <span className="text-xs text-emerald-400">
+                          API key securely configured
+                        </span>
+                      </div>
+                    )}
+
+                    <input
+                      className={inputClass}
+                      type="password"
+                      value={geminiApiKey}
+                      onChange={(event) => setGeminiApiKey(event.target.value)}
+                      placeholder={
+                        hasGeminiApiKey
+                          ? "Enter a new key to replace existing key"
+                          : "Enter Gemini API key"
+                      }
+                      disabled={savingApiKey}
+                    />
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className={primaryButtonClass}
+                        onClick={handleSaveGeminiKey}
+                        disabled={savingApiKey || !geminiApiKey.trim()}
+                      >
+                        <Save size={14} />
+                        {savingApiKey ? "Saving..." : "Save API key"}
+                      </button>
+
+                      {hasGeminiApiKey && (
+                        <button
+                          type="button"
+                          className={buttonClass}
+                          onClick={handleDeleteGeminiKey}
+                          disabled={savingApiKey || testingConnection}
+                        >
+                          <X size={14} />
+                          Remove key
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className={buttonClass}
+                        onClick={handleTestGeminiConnection}
+                        disabled={
+                          testingConnection ||
+                          savingApiKey ||
+                          !hasGeminiApiKey
+                        }
+                      >
+                        {testingConnection ? (
+                          <LoaderCircle size={14} className="animate-spin" />
+                        ) : (
+                          <CheckCircle2 size={14} />
+                        )}
+
+                        {testingConnection ? "Testing..." : "Test Connection"}
+                      </button>
+                    </div>
+                  </div>
                 </Field>
 
                 <Field
@@ -576,8 +736,9 @@ export default function SettingsPage() {
                 >
                   <input
                     className={inputClass}
-                    placeholder="Model selection will be configured later"
-                    disabled
+                    placeholder="Gemini 3.5 Flash Lite"
+                    value="gemini-3.5-flash-lite"
+                    readOnly
                   />
                 </Field>
               </>
