@@ -1,2 +1,2 @@
-// Shared backend models will be defined here.
-pub mod dashboard;
+﻿pub mod dashboard;
+pub mod stock_idea;
