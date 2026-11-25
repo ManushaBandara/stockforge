@@ -10,3 +10,14 @@ pub async fn get_metadata_studio_data(
         .await
         .map_err(|error| error.to_string())
 }
+
+#[tauri::command]
+pub async fn import_manual_image(
+    state: State<'_, DbState>,
+    stock_idea_id: String,
+    source_path: String,
+) -> Result<String, String> {
+    metadata_studio::import_manual_image(&state.pool, &stock_idea_id, &source_path)
+        .await
+        .map_err(|error| error.to_string())
+}

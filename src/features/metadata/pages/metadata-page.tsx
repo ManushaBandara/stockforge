@@ -1,5 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
+
 import {
   AlertCircle,
   Check,
@@ -7,6 +10,7 @@ import {
   Image as ImageIcon,
   Search,
   Sparkles,
+  Upload,
   X,
 } from "lucide-react";
 
@@ -19,6 +23,15 @@ import {
   buttonClass,
 } from "@/components/ui/page-ui";
 
+interface MetadataStudioImage {
+  assetId: string;
+  imagePath: string | null;
+  imageGenerationStatus: string;
+  isSelected: boolean;
+  status: string;
+  createdAt: string;
+}
+
 interface MetadataStudioItem {
   id: string;
   name: string;
@@ -27,11 +40,7 @@ interface MetadataStudioItem {
   description: string;
   keywords: string[];
   imagePrompt: string;
-  assetId: string | null;
-  imagePath: string | null;
-  imageGenerationStatus: string;
-  metadataStatus: string;
-  submissionStatus: string;
+  images: MetadataStudioImage[];
   createdAt: string;
 }
 
@@ -54,34 +63,80 @@ function formatDate(value: string) {
   }).format(date);
 }
 
-function getImageStatus(item: MetadataStudioItem) {
-  if (item.imagePath) return "Ready";
+function getAvailableImages(item: MetadataStudioItem) {
+  return item.images.filter((image) => image.imagePath);
+}
 
-  switch (item.imageGenerationStatus) {
-    case "queued":
-    case "pending":
-      return "Queued";
-    case "running":
-      return "Generating";
-    case "failed":
-      return "Failed";
-    default:
-      return "Missing image";
+function getSelectedImage(item: MetadataStudioItem) {
+  const availableImages = getAvailableImages(item);
+
+  return (
+    availableImages.find((image) => image.isSelected) ??
+    availableImages[0] ??
+    null
+  );
+}
+
+function hasImage(item: MetadataStudioItem) {
+  return getAvailableImages(item).length > 0;
+}
+
+function getImageStatus(item: MetadataStudioItem) {
+  if (hasImage(item)) return "Ready";
+
+  const statuses = item.images.map((image) => image.imageGenerationStatus);
+
+  if (statuses.includes("running")) return "Generating";
+  if (statuses.includes("queued") || statuses.includes("pending")) {
+    return "Queued";
   }
+  if (statuses.includes("failed")) return "Failed";
+
+  return "Missing image";
+}
+
+function getFileName(path: string) {
+  return path.split(/[\\/]/).pop() ?? path;
 }
 
 export default function MetadataPage() {
   const [data, setData] = useState<MetadataStudioData | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [importing, setImporting] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const loadMetadataStudio = useCallback(async () => {
+    const result = await invoke<MetadataStudioData>("get_metadata_studio_data");
+
+    setData(result);
+
+    setSelectedId((current) => {
+      if (current && result.items.some((item) => item.id === current)) {
+        return current;
+      }
+
+      return result.items[0]?.id ?? null;
+    });
+
+    setSelectedIds((current) => {
+      const validIds = new Set(
+        result.items.filter((item) => !hasImage(item)).map((item) => item.id),
+      );
+
+      return new Set([...current].filter((id) => validIds.has(id)));
+    });
+  }, []);
 
   useEffect(() => {
     let active = true;
 
-    async function loadMetadataStudio() {
+    async function initialize() {
       try {
         setLoading(true);
         setError(null);
@@ -93,14 +148,7 @@ export default function MetadataPage() {
         if (!active) return;
 
         setData(result);
-
-        setSelectedId((current) => {
-          if (current && result.items.some((item) => item.id === current)) {
-            return current;
-          }
-
-          return result.items[0]?.id ?? null;
-        });
+        setSelectedId(result.items[0]?.id ?? null);
       } catch (err) {
         if (active) {
           setError(err instanceof Error ? err.message : String(err));
@@ -112,7 +160,7 @@ export default function MetadataPage() {
       }
     }
 
-    loadMetadataStudio();
+    initialize();
 
     return () => {
       active = false;
@@ -136,12 +184,60 @@ export default function MetadataPage() {
 
   const selectedAsset = items.find((item) => item.id === selectedId) ?? null;
 
-  const missingImageItems = items.filter((item) => !item.imagePath);
+  const selectedImage = selectedAsset ? getSelectedImage(selectedAsset) : null;
+
+  const missingImageItems = items.filter((item) => !hasImage(item));
 
   const selectedMissingCount = selectedIds.size;
 
+  async function handleImportImage() {
+    if (!selectedAsset || importing) return;
+
+    try {
+      setError(null);
+      setSuccess(null);
+
+      const selectedPath = await open({
+        multiple: false,
+        directory: false,
+        title: "Select an image for this stock idea",
+        filters: [
+          {
+            name: "Images",
+            extensions: ["jpg", "jpeg", "png", "webp", "tif", "tiff"],
+          },
+        ],
+      });
+
+      if (!selectedPath || Array.isArray(selectedPath)) {
+        return;
+      }
+
+      setImporting(true);
+
+      await invoke<string>("import_manual_image", {
+        stockIdeaId: selectedAsset.id,
+        sourcePath: selectedPath,
+      });
+
+      await loadMetadataStudio();
+
+      setSuccess(`Image successfully imported for "${selectedAsset.name}".`);
+
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        next.delete(selectedAsset.id);
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setImporting(false);
+    }
+  }
+
   function toggleSelection(item: MetadataStudioItem) {
-    if (item.imagePath) return;
+    if (hasImage(item)) return;
 
     setSelectedIds((current) => {
       const next = new Set(current);
@@ -179,22 +275,51 @@ export default function MetadataPage() {
       <PageHeader
         eyebrow="Optimization"
         title="Metadata Studio"
-        description="Review Gemini-generated metadata and prepare your stock ideas for image generation."
+        description="Review generated metadata, manage image attempts and prepare your stock ideas for production."
       />
 
       {error && (
         <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           <AlertCircle size={17} className="mt-0.5 shrink-0" />
-          <div>
-            <p className="font-medium">Unable to load Metadata Studio</p>
-            <p className="mt-1 text-xs">{error}</p>
+
+          <div className="min-w-0">
+            <p className="font-medium">Metadata Studio error</p>
+
+            <p className="mt-1 break-words text-xs">{error}</p>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="ml-auto shrink-0 text-red-400 hover:text-white"
+            aria-label="Dismiss error"
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
+          <Check size={17} />
+
+          <p>{success}</p>
+
+          <button
+            type="button"
+            onClick={() => setSuccess(null)}
+            className="ml-auto text-emerald-400 hover:text-white"
+            aria-label="Dismiss success message"
+          >
+            <X size={15} />
+          </button>
         </div>
       )}
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Panel className="p-4">
           <p className="text-xs text-slate-400">Unpublished ideas</p>
+
           <p className="mt-2 text-2xl font-semibold text-white">
             {data?.total ?? "—"}
           </p>
@@ -202,6 +327,7 @@ export default function MetadataPage() {
 
         <Panel className="p-4">
           <p className="text-xs text-slate-400">Missing images</p>
+
           <p className="mt-2 text-2xl font-semibold text-amber-400">
             {data?.missingImages ?? "—"}
           </p>
@@ -209,6 +335,7 @@ export default function MetadataPage() {
 
         <Panel className="p-4">
           <p className="text-xs text-slate-400">Images ready</p>
+
           <p className="mt-2 text-2xl font-semibold text-emerald-400">
             {data?.imagesReady ?? "—"}
           </p>
@@ -216,7 +343,8 @@ export default function MetadataPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[280px_minmax(0,1fr)_280px]">
-        {/* Asset list */}
+        {/* Stock ideas list */}
+
         <Panel className="h-fit">
           <PanelHeading
             title="Stock ideas"
@@ -229,6 +357,7 @@ export default function MetadataPage() {
                 size={14}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
               />
+
               <input
                 className={`${inputClass} py-2 pl-8 text-xs`}
                 placeholder="Search ideas..."
@@ -269,6 +398,7 @@ export default function MetadataPage() {
               filteredItems.map((item) => {
                 const isSelected = selectedId === item.id;
                 const isChecked = selectedIds.has(item.id);
+                const canSelect = !hasImage(item);
 
                 return (
                   <div
@@ -277,7 +407,7 @@ export default function MetadataPage() {
                       isSelected ? "bg-[#302B46]" : "hover:bg-[#222630]"
                     }`}
                   >
-                    {!item.imagePath && (
+                    {canSelect && (
                       <input
                         type="checkbox"
                         checked={isChecked}
@@ -310,6 +440,13 @@ export default function MetadataPage() {
                           <div className="mt-2">
                             <StatusBadge status={getImageStatus(item)} />
                           </div>
+
+                          {item.images.length > 0 && (
+                            <p className="mt-2 text-[10px] text-slate-500">
+                              {item.images.length} image attempt
+                              {item.images.length !== 1 ? "s" : ""}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </button>
@@ -320,7 +457,8 @@ export default function MetadataPage() {
           </div>
         </Panel>
 
-        {/* Metadata details */}
+        {/* Metadata and image details */}
+
         <div className="min-w-0 space-y-4">
           <Panel>
             <PanelHeading
@@ -329,24 +467,136 @@ export default function MetadataPage() {
             />
 
             <div className="flex aspect-[16/7] flex-col items-center justify-center gap-3 bg-gradient-to-br from-indigo-500/10 via-[#25283A] to-slate-900">
-              {selectedAsset?.imagePath ? (
+              {selectedImage?.imagePath ? (
                 <>
                   <Check size={36} className="text-emerald-400" />
+
                   <p className="text-sm text-emerald-300">Image file linked</p>
+
                   <p className="max-w-[80%] break-all text-center text-[11px] text-slate-500">
-                    {selectedAsset.imagePath}
+                    {getFileName(selectedImage.imagePath)}
                   </p>
+
+                  {selectedImage.isSelected && (
+                    <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] text-emerald-400">
+                      Selected image
+                    </span>
+                  )}
                 </>
               ) : (
                 <>
                   <ImageIcon size={48} className="text-white/30" />
+
                   <p className="text-xs text-slate-500">
-                    No generated image yet
+                    No image available yet
                   </p>
                 </>
               )}
             </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#272B35] p-4">
+              <div>
+                <p className="text-xs font-medium text-slate-200">
+                  Manual image import
+                </p>
+
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Add an existing image to this idea.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleImportImage}
+                disabled={!selectedAsset || importing}
+                className={`${buttonClass} shrink-0`}
+              >
+                <Upload size={14} />
+
+                {importing ? "Importing..." : "Import image"}
+              </button>
+            </div>
           </Panel>
+
+          {/* Image attempts */}
+
+          <Panel>
+            <PanelHeading
+              title="Image attempts"
+              description={
+                selectedAsset
+                  ? `${selectedAsset.images.length} saved attempts`
+                  : "Select a stock idea"
+              }
+            />
+
+            {selectedAsset ? (
+              selectedAsset.images.length > 0 ? (
+                <div className="divide-y divide-[#272B35]">
+                  {selectedAsset.images.map((image, index) => (
+                    <div
+                      key={image.assetId}
+                      className="flex items-center gap-3 p-4"
+                    >
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#303541] bg-[#191C24]">
+                        <ImageIcon size={16} className="text-slate-400" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-medium text-slate-200">
+                          Image attempt {index + 1}
+                        </p>
+
+                        <p className="mt-1 truncate text-[11px] text-slate-500">
+                          {image.imagePath
+                            ? getFileName(image.imagePath)
+                            : image.imageGenerationStatus}
+                        </p>
+
+                        <p className="mt-1 text-[10px] text-slate-500">
+                          {formatDate(image.createdAt)}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        <StatusBadge
+                          status={
+                            image.imagePath
+                              ? "Ready"
+                              : image.imageGenerationStatus
+                          }
+                        />
+
+                        {image.isSelected && (
+                          <span className="text-[10px] text-emerald-400">
+                            Selected
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-5 text-center">
+                  <ImageIcon size={28} className="mx-auto text-slate-600" />
+
+                  <p className="mt-3 text-xs text-slate-400">
+                    No image attempts yet.
+                  </p>
+
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Import an existing image or generate one later.
+                  </p>
+                </div>
+              )
+            ) : (
+              <p className="p-5 text-xs text-slate-500">
+                Select a stock idea to view its image attempts.
+              </p>
+            )}
+          </Panel>
+
+          {/* Generated metadata */}
 
           <Panel>
             <PanelHeading
@@ -361,6 +611,7 @@ export default function MetadataPage() {
                     <label className="text-xs font-medium text-slate-300">
                       Title
                     </label>
+
                     <span className="text-[11px] text-slate-500">
                       {selectedAsset.title.length} characters
                     </span>
@@ -378,6 +629,7 @@ export default function MetadataPage() {
                     <label className="text-xs font-medium text-slate-300">
                       Description
                     </label>
+
                     <span className="text-[11px] text-slate-500">
                       {selectedAsset.description.length} characters
                     </span>
@@ -395,6 +647,7 @@ export default function MetadataPage() {
                     <label className="text-xs font-medium text-slate-300">
                       Keywords
                     </label>
+
                     <span className="text-[11px] text-slate-500">
                       {selectedAsset.keywords.length} keywords
                     </span>
@@ -426,7 +679,8 @@ export default function MetadataPage() {
           </Panel>
         </div>
 
-        {/* Details and image generation */}
+        {/* Image generation and idea information */}
+
         <div className="space-y-4">
           <Panel>
             <PanelHeading
@@ -450,6 +704,7 @@ export default function MetadataPage() {
 
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-xs text-slate-400">Image status</span>
+
                     <StatusBadge status={getImageStatus(selectedAsset)} />
                   </div>
                 </>
@@ -465,12 +720,13 @@ export default function MetadataPage() {
             <h3 className="text-sm font-semibold text-white">Bulk selection</h3>
 
             <p className="mt-2 text-xs leading-relaxed text-slate-400">
-              Select multiple ideas without images from the list. They will be
-              available for bulk image generation.
+              Select multiple ideas without images. They will be available for
+              bulk image generation.
             </p>
 
             <div className="mt-4 flex items-center justify-between">
               <span className="text-xs text-slate-400">Selected ideas</span>
+
               <span className="text-sm font-semibold text-white">
                 {selectedMissingCount}
               </span>
@@ -504,6 +760,7 @@ export default function MetadataPage() {
               <div className="mt-3 space-y-3 text-xs">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-400">Category</span>
+
                   <span className="text-right text-slate-200">
                     {selectedAsset.category}
                   </span>
@@ -511,14 +768,18 @@ export default function MetadataPage() {
 
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-400">Created</span>
+
                   <span className="text-right text-slate-200">
                     {formatDate(selectedAsset.createdAt)}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-400">Metadata status</span>
-                  <StatusBadge status={selectedAsset.metadataStatus} />
+                  <span className="text-slate-400">Image attempts</span>
+
+                  <span className="text-right text-slate-200">
+                    {selectedAsset.images.length}
+                  </span>
                 </div>
               </div>
             ) : (

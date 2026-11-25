@@ -33,6 +33,7 @@ pub fn run() {
             commands::stock_ideas::create_stock_idea,
             commands::stock_ideas::get_stock_ideas,
             commands::metadata_studio::get_metadata_studio_data,
+            commands::metadata_studio::import_manual_image,
         ])
         .run(tauri::generate_context!())
         .expect("Failed to run StockForge");

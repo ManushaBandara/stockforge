@@ -12,4 +12,7 @@ pub enum AppError {
 
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
 }
