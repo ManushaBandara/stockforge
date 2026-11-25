@@ -10,6 +10,7 @@ use tauri::Manager;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let pool = tauri::async_runtime::block_on(db::create_pool()).map_err(|error| {
                 std::io::Error::other(format!("Failed to connect to StockForge database: {error}"))

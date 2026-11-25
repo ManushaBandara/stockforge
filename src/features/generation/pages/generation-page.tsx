@@ -1,23 +1,17 @@
 import { useState } from "react";
 import {
-  Upload,
   Plus,
   Images,
   Layers,
-  CheckCircle2,
   Clock3,
   AlertCircle,
-  FolderOpen,
-  ArrowRight,
   Target,
 } from "lucide-react";
 
 import {
   PageHeader,
   Panel,
-  PanelHeading,
   StatCard,
-  StatusBadge,
   buttonClass,
   primaryButtonClass,
   inputClass,

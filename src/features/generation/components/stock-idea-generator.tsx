@@ -1,11 +1,9 @@
-
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
   Sparkles,
   LoaderCircle,
   Save,
-  RefreshCw,
   Image,
   FileText,
   Tags,
@@ -18,7 +16,6 @@ import {
   Panel,
   PanelHeading,
   primaryButtonClass,
-  buttonClass,
 } from "@/components/ui/page-ui";
 
 import { buildStockIdeaPrompt } from "../lib/stock-idea-prompt";
@@ -35,14 +32,14 @@ interface StockIdeaGeneratorProps {
   niche: TrendingNiche;
 }
 
-export default function StockIdeaGenerator({
-  niche,
-}: StockIdeaGeneratorProps) {
+export default function StockIdeaGenerator({ niche }: StockIdeaGeneratorProps) {
   const [generatedIdea, setGeneratedIdea] =
     useState<StockIdeaGeneration | null>(null);
 
-  const [groundingMetadata, setGroundingMetadata] =
-    useState<Record<string, unknown> | null>(null);
+  const [groundingMetadata, setGroundingMetadata] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -59,10 +56,9 @@ export default function StockIdeaGenerator({
     try {
       const prompt = buildStockIdeaPrompt(niche);
 
-      const response = await invoke<GeminiGeneration>(
-        "generate_ai_content",
-        { prompt }
-      );
+      const response = await invoke<GeminiGeneration>("generate_ai_content", {
+        prompt,
+      });
 
       const idea = parseStockIdea(response.text);
 
@@ -94,7 +90,7 @@ export default function StockIdeaGenerator({
           groundingMetadata,
         },
         null,
-        2
+        2,
       );
 
       const trendResearchJson = JSON.stringify(
@@ -104,7 +100,7 @@ export default function StockIdeaGenerator({
           groundingMetadata,
         },
         null,
-        2
+        2,
       );
 
       const input = {
@@ -171,9 +167,7 @@ export default function StockIdeaGenerator({
             {niche.name}
           </h3>
 
-          <p className="mt-1 text-xs text-slate-400">
-            {niche.category}
-          </p>
+          <p className="mt-1 text-xs text-slate-400">{niche.category}</p>
 
           <p className="mt-3 text-xs leading-relaxed text-slate-500">
             {niche.description}
@@ -191,18 +185,15 @@ export default function StockIdeaGenerator({
             </h3>
 
             <p className="mt-2 max-w-md text-xs leading-relaxed text-slate-500">
-              Gemini will create an original image prompt, title,
-              description and relevant keywords using the selected niche.
+              Gemini will create an original image prompt, title, description
+              and relevant keywords using the selected niche.
             </p>
           </div>
         )}
 
         {loading && (
           <div className="flex min-h-[180px] flex-col items-center justify-center text-center">
-            <LoaderCircle
-              size={30}
-              className="animate-spin text-[#A78BFA]"
-            />
+            <LoaderCircle size={30} className="animate-spin text-[#A78BFA]" />
 
             <p className="mt-4 text-sm font-medium text-white">
               Creating your stock idea...
@@ -220,9 +211,7 @@ export default function StockIdeaGenerator({
               Generation failed
             </p>
 
-            <p className="mt-2 break-words text-xs text-slate-400">
-              {error}
-            </p>
+            <p className="mt-2 break-words text-xs text-slate-400">{error}</p>
 
             <button
               className="mt-3 text-xs font-medium text-white underline"

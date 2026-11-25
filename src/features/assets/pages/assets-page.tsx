@@ -14,7 +14,6 @@ import {
 import {
   PageHeader,
   Panel,
-  PanelHeading,
   StatusBadge,
   buttonClass,
   inputClass,

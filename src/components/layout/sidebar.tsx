@@ -1,5 +1,4 @@
 import {
-  Layers,
   Mango,
   MoreHorizontal,
   Sparkles,
