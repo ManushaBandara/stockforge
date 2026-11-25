@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Upload,
@@ -62,8 +61,9 @@ export default function GenerationPage() {
   const [batches, setBatches] = useState(initialBatches);
   const [showCreate, setShowCreate] = useState(false);
 
-  const [selectedNiche, setSelectedNiche] =
-    useState<TrendingNiche | null>(null);
+  const [selectedNiche, setSelectedNiche] = useState<TrendingNiche | null>(
+    null,
+  );
 
   function createBatch() {
     if (!batchName.trim()) return;
@@ -101,70 +101,6 @@ export default function GenerationPage() {
           </button>
         }
       />
-
-      {/* AI TREND DISCOVERY */}
-      <div className="mb-5">
-        <NicheDiscoveryPanel
-          onSelectNiche={(niche) => setSelectedNiche(niche)}
-        />
-      </div>
-
-      {/* SELECTED NICHE */}
-      
-{/* SELECTED NICHE */}
-{selectedNiche && (
-  <>
-    <Panel className="mb-5">
-      <div className="flex flex-wrap items-center justify-between gap-4 p-5">
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg border border-[#39334F] sf-accent-soft p-3">
-            <Target size={20} className="text-white" />
-          </div>
-
-          <div className="min-w-0">
-            <p className="text-xs text-slate-500">
-              Selected stock niche
-            </p>
-
-            <h3 className="mt-1 text-sm font-semibold text-white">
-              {selectedNiche.name}
-            </h3>
-
-            <p className="mt-1 text-xs text-slate-400">
-              {selectedNiche.category}
-            </p>
-
-            <p className="mt-2 max-w-2xl text-xs leading-relaxed text-slate-500">
-              {selectedNiche.description}
-            </p>
-
-            <span className="mt-3 inline-flex rounded-full border border-[#39334F] sf-accent-soft px-2.5 py-1 text-[10px] font-medium capitalize text-white">
-              {selectedNiche.commercialPotential} commercial potential
-            </span>
-          </div>
-        </div>
-
-        <button
-          className={buttonClass}
-          onClick={() => setSelectedNiche(null)}
-        >
-          Change selection
-        </button>
-      </div>
-    </Panel>
-
-    <div className="mb-5">
-      <StockIdeaGenerator niche={selectedNiche} />
-    </div>
-  </>
-)}
-
-      {/* SAVED STOCK IDEAS */}
-      
-      <div className="mb-5">
-        <SavedStockIdeas />
-      </div>
-
       {/* GENERATION STATISTICS */}
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -196,7 +132,67 @@ export default function GenerationPage() {
         />
       </div>
 
-      {/* IMPORT AND WORKFLOW */}
+      {/* AI TREND DISCOVERY */}
+      <div className="mb-5">
+        <NicheDiscoveryPanel
+          onSelectNiche={(niche) => setSelectedNiche(niche)}
+        />
+      </div>
+
+      {/* SELECTED NICHE */}
+
+      {/* SELECTED NICHE */}
+      {selectedNiche && (
+        <>
+          <Panel className="mb-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg border border-[#39334F] sf-accent-soft p-3">
+                  <Target size={20} className="text-white" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-500">Selected stock niche</p>
+
+                  <h3 className="mt-1 text-sm font-semibold text-white">
+                    {selectedNiche.name}
+                  </h3>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    {selectedNiche.category}
+                  </p>
+
+                  <p className="mt-2 max-w-2xl text-xs leading-relaxed text-slate-500">
+                    {selectedNiche.description}
+                  </p>
+
+                  <span className="mt-3 inline-flex rounded-full border border-[#39334F] sf-accent-soft px-2.5 py-1 text-[10px] font-medium capitalize text-white">
+                    {selectedNiche.commercialPotential} commercial potential
+                  </span>
+                </div>
+              </div>
+
+              <button
+                className={buttonClass}
+                onClick={() => setSelectedNiche(null)}
+              >
+                Change selection
+              </button>
+            </div>
+          </Panel>
+
+          <div className="mb-5">
+            <StockIdeaGenerator niche={selectedNiche} />
+          </div>
+        </>
+      )}
+
+      {/* SAVED STOCK IDEAS */}
+
+      <div className="mb-5">
+        <SavedStockIdeas />
+      </div>
+      {/* IMPORT AND WORKFLOW
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.4fr_1fr]">
         <Panel>
           <PanelHeading
@@ -265,9 +261,7 @@ export default function GenerationPage() {
                         {file.name}
                       </span>
 
-                      <span>
-                        {(file.size / 1024 / 1024).toFixed(1)} MB
-                      </span>
+                      <span>{(file.size / 1024 / 1024).toFixed(1)} MB</span>
                     </div>
                   ))}
                 </div>
@@ -336,18 +330,15 @@ export default function GenerationPage() {
             })}
           </div>
         </Panel>
-      </div>
+      </div>*/}
 
-      {/* RECENT BATCHES */}
+      {/* RECENT BATCHES
       <Panel className="mt-5">
         <PanelHeading
           title="Recent batches"
           description="Monitor your imported asset collections."
           action={
-            <button
-              className={buttonClass}
-              onClick={() => setShowCreate(true)}
-            >
+            <button className={buttonClass} onClick={() => setShowCreate(true)}>
               <Plus size={15} />
               Create batch
             </button>
@@ -371,18 +362,12 @@ export default function GenerationPage() {
               {batches.map((batch) => (
                 <tr key={batch.id} className="border-t border-[#272B35]">
                   <td className="py-4">
-                    <p className="font-medium text-white">
-                      {batch.name}
-                    </p>
+                    <p className="font-medium text-white">{batch.name}</p>
 
-                    <p className="mt-1 text-xs text-slate-500">
-                      {batch.id}
-                    </p>
+                    <p className="mt-1 text-xs text-slate-500">{batch.id}</p>
                   </td>
 
-                  <td className="py-4 text-slate-300">
-                    {batch.assets}
-                  </td>
+                  <td className="py-4 text-slate-300">{batch.assets}</td>
 
                   <td className="py-4">
                     <div className="w-32">
@@ -393,9 +378,7 @@ export default function GenerationPage() {
 
                         <span>
                           {batch.assets
-                            ? Math.round(
-                                (batch.completed / batch.assets) * 100
-                              )
+                            ? Math.round((batch.completed / batch.assets) * 100)
                             : 0}
                           %
                         </span>
@@ -416,9 +399,7 @@ export default function GenerationPage() {
                     </div>
                   </td>
 
-                  <td className="py-4 text-xs text-slate-400">
-                    {batch.date}
-                  </td>
+                  <td className="py-4 text-xs text-slate-400">{batch.date}</td>
 
                   <td className="py-4">
                     <StatusBadge status={batch.status} />
@@ -438,7 +419,7 @@ export default function GenerationPage() {
           </table>
         </div>
       </Panel>
-
+*/}
       {/* CREATE BATCH MODAL */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">

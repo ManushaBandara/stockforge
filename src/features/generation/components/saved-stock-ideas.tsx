@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
@@ -11,10 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-import {
-  Panel,
-  PanelHeading,
-} from "@/components/ui/page-ui";
+import { Panel, PanelHeading } from "@/components/ui/page-ui";
 
 import type { StockIdea } from "../types/stock-idea.types";
 
@@ -65,13 +61,8 @@ export default function SavedStockIdeas() {
       <div className="p-5">
         {loading && (
           <div className="flex min-h-[120px] items-center justify-center gap-3">
-            <LoaderCircle
-              size={20}
-              className="animate-spin text-[#A78BFA]"
-            />
-            <p className="text-xs text-slate-400">
-              Loading saved ideas...
-            </p>
+            <LoaderCircle size={20} className="animate-spin text-[#A78BFA]" />
+            <p className="text-xs text-slate-400">Loading saved ideas...</p>
           </div>
         )}
 
@@ -84,9 +75,7 @@ export default function SavedStockIdeas() {
               </p>
             </div>
 
-            <p className="mt-2 break-words text-xs text-slate-400">
-              {error}
-            </p>
+            <p className="mt-2 break-words text-xs text-slate-400">{error}</p>
 
             <button
               onClick={loadIdeas}
@@ -143,8 +132,8 @@ export default function SavedStockIdeas() {
                 >
                   <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 p-4">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="rounded-lg border border-[#39334F] bg-[#211D30] p-2.5">
-                        <Image size={17} className="text-[#A78BFA]" />
+                      <div className="rounded-lg border border-[#39334F] sf-accent-soft p-2.5">
+                        <Image size={17} className="sf-accent-text" />
                       </div>
 
                       <div className="min-w-0">
@@ -169,9 +158,7 @@ export default function SavedStockIdeas() {
                       <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
                         Adobe Stock Title
                       </p>
-                      <p className="mt-1 text-sm text-white">
-                        {idea.title}
-                      </p>
+                      <p className="mt-1 text-sm text-white">{idea.title}</p>
                     </div>
 
                     <div>
