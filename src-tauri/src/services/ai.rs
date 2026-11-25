@@ -28,9 +28,6 @@ pub async fn generate_grounded_content(prompt: &str) -> Result<GeminiGeneration,
                 "text": prompt
             }]
         }],
-        "tools": [{
-            "google_search": {}
-        }],
         "generationConfig": {
             "temperature": 1.0
         }
