@@ -1,13 +1,11 @@
-
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::services::credentials;
 
-const GEMINI_MODEL: &str = "gemini-3.5-flash-lite";
-const GEMINI_API_URL: &str =
-    "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_MODEL: &str = "gemini-3.1-flash-lite";
+const GEMINI_API_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models";
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -16,17 +14,12 @@ pub struct GeminiGeneration {
     pub grounding_metadata: Option<Value>,
 }
 
-pub async fn generate_grounded_content(
-    prompt: &str,
-) -> Result<GeminiGeneration, String> {
+pub async fn generate_grounded_content(prompt: &str) -> Result<GeminiGeneration, String> {
     let api_key = credentials::get_gemini_api_key()?;
 
     let client = Client::new();
 
-    let url = format!(
-        "{}/{}:generateContent",
-        GEMINI_API_URL, GEMINI_MODEL
-    );
+    let url = format!("{}/{}:generateContent", GEMINI_API_URL, GEMINI_MODEL);
 
     let request_body = json!({
         "contents": [{
@@ -54,17 +47,16 @@ pub async fn generate_grounded_content(
     let status = response.status();
 
     let response_body_text = response
-    .text()
-    .await
-    .map_err(|error| format!("Failed to read Gemini response: {error}"))?;
+        .text()
+        .await
+        .map_err(|error| format!("Failed to read Gemini response: {error}"))?;
 
-    let response_body: Value = serde_json::from_str(&response_body_text)
-        .map_err(|error| {
-            format!(
-                "Gemini returned invalid JSON (HTTP {status}): {error}. Response: {}",
-                response_body_text.chars().take(1000).collect::<String>()
-            )
-        })?;
+    let response_body: Value = serde_json::from_str(&response_body_text).map_err(|error| {
+        format!(
+            "Gemini returned invalid JSON (HTTP {status}): {error}. Response: {}",
+            response_body_text.chars().take(1000).collect::<String>()
+        )
+    })?;
 
     if !status.is_success() {
         let message = response_body["error"]["message"]
@@ -80,17 +72,11 @@ pub async fn generate_grounded_content(
 
     let text = candidate["content"]["parts"]
         .as_array()
-        .and_then(|parts| {
-            parts.iter()
-                .filter_map(|part| part["text"].as_str())
-                .next()
-        })
+        .and_then(|parts| parts.iter().filter_map(|part| part["text"].as_str()).next())
         .ok_or("Gemini returned no text content")?
         .to_string();
 
-    let grounding_metadata = candidate
-        .get("groundingMetadata")
-        .cloned();
+    let grounding_metadata = candidate.get("groundingMetadata").cloned();
 
     Ok(GeminiGeneration {
         text,
@@ -103,10 +89,7 @@ pub async fn test_gemini_connection() -> Result<String, String> {
 
     let client = Client::new();
 
-    let url = format!(
-        "{}/{}:generateContent",
-        GEMINI_API_URL, GEMINI_MODEL
-    );
+    let url = format!("{}/{}:generateContent", GEMINI_API_URL, GEMINI_MODEL);
 
     let request_body = json!({
         "contents": [{
@@ -132,17 +115,16 @@ pub async fn test_gemini_connection() -> Result<String, String> {
     let status = response.status();
 
     let response_body_text = response
-    .text()
-    .await
-    .map_err(|error| format!("Failed to read Gemini response: {error}"))?;
+        .text()
+        .await
+        .map_err(|error| format!("Failed to read Gemini response: {error}"))?;
 
-    let response_body: Value = serde_json::from_str(&response_body_text)
-        .map_err(|error| {
-            format!(
-                "Gemini returned invalid JSON (HTTP {status}): {error}. Response: {}",
-                response_body_text.chars().take(1000).collect::<String>()
-            )
-        })?;
+    let response_body: Value = serde_json::from_str(&response_body_text).map_err(|error| {
+        format!(
+            "Gemini returned invalid JSON (HTTP {status}): {error}. Response: {}",
+            response_body_text.chars().take(1000).collect::<String>()
+        )
+    })?;
 
     if !status.is_success() {
         let message = response_body["error"]["message"]

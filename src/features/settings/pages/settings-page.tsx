@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { ReactNode } from "react";
@@ -154,17 +153,13 @@ export default function SettingsPage() {
     DEFAULT_PREFERENCES.workerLimit,
   );
 
-  const [retryLimit, setRetryLimit] = useState(
-    DEFAULT_PREFERENCES.retryLimit,
-  );
+  const [retryLimit, setRetryLimit] = useState(DEFAULT_PREFERENCES.retryLimit);
 
   const [storagePath, setStoragePath] = useState(
     DEFAULT_PREFERENCES.storagePath,
   );
 
-  const [aiProvider, setAiProvider] = useState(
-    DEFAULT_PREFERENCES.aiProvider,
-  );
+  const [aiProvider, setAiProvider] = useState(DEFAULT_PREFERENCES.aiProvider);
 
   const [geminiApiKey, setGeminiApiKey] = useState("");
   const [hasGeminiApiKey, setHasGeminiApiKey] = useState(false);
@@ -178,9 +173,7 @@ export default function SettingsPage() {
     string | number | undefined
   >();
 
-  const active = sections.find(
-    (section) => section.id === activeSection,
-  )!;
+  const active = sections.find((section) => section.id === activeSection)!;
 
   function update<T>(setter: (value: T) => void, value: T) {
     setter(value);
@@ -239,30 +232,30 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
 
-  async function checkGeminiApiKey() {
-    try {
-      const exists = await invoke<boolean>("has_gemini_api_key");
+    async function checkGeminiApiKey() {
+      try {
+        const exists = await invoke<boolean>("has_gemini_api_key");
 
-      if (!cancelled) {
-        setHasGeminiApiKey(exists);
-      }
-    } catch (error) {
-      if (!cancelled) {
-        notify.error("Failed to check Gemini API key", {
-          description: String(error),
-        });
+        if (!cancelled) {
+          setHasGeminiApiKey(exists);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          notify.error("Failed to check Gemini API key", {
+            description: String(error),
+          });
+        }
       }
     }
-  }
 
-  void checkGeminiApiKey();
+    void checkGeminiApiKey();
 
-  return () => {
-    cancelled = true;
-  };
-}, []);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSave() {
     const preferences: AppPreferences = {
@@ -300,72 +293,72 @@ export default function SettingsPage() {
   }
 
   async function handleSaveGeminiKey() {
-  if (!geminiApiKey.trim()) {
-    notify.error("Please enter your Gemini API key.");
-    return;
+    if (!geminiApiKey.trim()) {
+      notify.error("Please enter your Gemini API key.");
+      return;
+    }
+
+    setSavingApiKey(true);
+
+    try {
+      await invoke("save_gemini_api_key", {
+        apiKey: geminiApiKey.trim(),
+      });
+
+      setHasGeminiApiKey(true);
+      setGeminiApiKey("");
+
+      notify.success("Gemini API key saved securely.");
+    } catch (error) {
+      notify.error("Failed to save Gemini API key", {
+        description: String(error),
+      });
+    } finally {
+      setSavingApiKey(false);
+    }
   }
 
-  setSavingApiKey(true);
+  async function handleDeleteGeminiKey() {
+    setSavingApiKey(true);
 
-  try {
-    await invoke("save_gemini_api_key", {
-      apiKey: geminiApiKey.trim(),
-    });
+    try {
+      await invoke("delete_gemini_api_key");
 
-    setHasGeminiApiKey(true);
-    setGeminiApiKey("");
+      setHasGeminiApiKey(false);
+      setGeminiApiKey("");
 
-    notify.success("Gemini API key saved securely.");
-  } catch (error) {
-    notify.error("Failed to save Gemini API key", {
-      description: String(error),
-    });
-  } finally {
-    setSavingApiKey(false);
-  }
-}
-
-async function handleDeleteGeminiKey() {
-  setSavingApiKey(true);
-
-  try {
-    await invoke("delete_gemini_api_key");
-
-    setHasGeminiApiKey(false);
-    setGeminiApiKey("");
-
-    notify.success("Gemini API key removed.");
-  } catch (error) {
-    notify.error("Failed to remove Gemini API key", {
-      description: String(error),
-    });
-  } finally {
-    setSavingApiKey(false);
-  }
-}
-
-async function handleTestGeminiConnection() {
-  if (!hasGeminiApiKey) {
-    notify.error("Gemini API key is not configured.");
-    return;
+      notify.success("Gemini API key removed.");
+    } catch (error) {
+      notify.error("Failed to remove Gemini API key", {
+        description: String(error),
+      });
+    } finally {
+      setSavingApiKey(false);
+    }
   }
 
-  setTestingConnection(true);
+  async function handleTestGeminiConnection() {
+    if (!hasGeminiApiKey) {
+      notify.error("Gemini API key is not configured.");
+      return;
+    }
 
-  try {
-    const response = await invoke<string>("test_gemini_connection");
+    setTestingConnection(true);
 
-    notify.success("Gemini connection successful!", {
-      description: response,
-    });
-  } catch (error) {
-    notify.error("Gemini connection failed", {
-      description: String(error),
-    });
-  } finally {
-    setTestingConnection(false);
+    try {
+      const response = await invoke<string>("test_gemini_connection");
+
+      notify.success("Gemini connection successful!", {
+        description: response,
+      });
+    } catch (error) {
+      notify.error("Gemini connection failed", {
+        description: String(error),
+      });
+    } finally {
+      setTestingConnection(false);
+    }
   }
-}
 
   // Notification testing functions
 
@@ -481,11 +474,7 @@ async function handleTestGeminiConnection() {
                   label="Application name"
                   description="The name displayed in the desktop application."
                 >
-                  <input
-                    className={inputClass}
-                    value="StockForge"
-                    readOnly
-                  />
+                  <input className={inputClass} value="StockForge" readOnly />
                 </Field>
 
                 <Field
@@ -639,7 +628,6 @@ async function handleTestGeminiConnection() {
               </>
             )}
 
-            
             {activeSection === "ai" && (
               <>
                 <Field
@@ -713,9 +701,7 @@ async function handleTestGeminiConnection() {
                         className={buttonClass}
                         onClick={handleTestGeminiConnection}
                         disabled={
-                          testingConnection ||
-                          savingApiKey ||
-                          !hasGeminiApiKey
+                          testingConnection || savingApiKey || !hasGeminiApiKey
                         }
                       >
                         {testingConnection ? (
@@ -736,8 +722,8 @@ async function handleTestGeminiConnection() {
                 >
                   <input
                     className={inputClass}
-                    placeholder="Gemini 3.5 Flash Lite"
-                    value="gemini-3.5-flash-lite"
+                    placeholder="Gemini 3.1 Flash Lite"
+                    value="gemini-3.1-flash-lite"
                     readOnly
                   />
                 </Field>
@@ -750,11 +736,7 @@ async function handleTestGeminiConnection() {
                   label="Browser engine"
                   description="Browser used for assisted Adobe Stock workflows."
                 >
-                  <input
-                    className={inputClass}
-                    value="Chromium"
-                    readOnly
-                  />
+                  <input className={inputClass} value="Chromium" readOnly />
                 </Field>
 
                 <Field
@@ -892,10 +874,7 @@ async function handleTestGeminiConnection() {
                       }
                       className="flex items-center gap-3 rounded-lg border border-[#303541] bg-[#17191F] p-3 text-left transition hover:border-rose-500/40 hover:bg-[#251C22]"
                     >
-                      <CircleX
-                        size={19}
-                        className="shrink-0 text-rose-400"
-                      />
+                      <CircleX size={19} className="shrink-0 text-rose-400" />
                       <div>
                         <p className="text-sm font-medium text-slate-200">
                           Error
@@ -934,16 +913,12 @@ async function handleTestGeminiConnection() {
                       type="button"
                       onClick={() =>
                         notify.info("New update available", {
-                          description:
-                            "A new version of StockForge is ready.",
+                          description: "A new version of StockForge is ready.",
                         })
                       }
                       className="flex items-center gap-3 rounded-lg border border-[#303541] bg-[#17191F] p-3 text-left transition hover:border-blue-500/40 hover:bg-[#1C222B]"
                     >
-                      <Info
-                        size={19}
-                        className="shrink-0 text-blue-400"
-                      />
+                      <Info size={19} className="shrink-0 text-blue-400" />
                       <div>
                         <p className="text-sm font-medium text-slate-200">
                           Information
@@ -959,18 +934,15 @@ async function handleTestGeminiConnection() {
 
                   <div className="mt-5 rounded-lg border border-[#303541] bg-[#17191F] p-4">
                     <div className="flex items-center gap-2">
-                      <LoaderCircle
-                        size={17}
-                        className="text-violet-400"
-                      />
+                      <LoaderCircle size={17} className="text-violet-400" />
                       <p className="text-sm font-medium text-slate-200">
                         Loading notification
                       </p>
                     </div>
 
                     <p className="mt-1 text-xs text-slate-500">
-                      Test persistent loading notifications and their
-                      completion behavior.
+                      Test persistent loading notifications and their completion
+                      behavior.
                     </p>
 
                     <div className="mt-4 flex flex-wrap gap-2">
@@ -1017,8 +989,8 @@ async function handleTestGeminiConnection() {
                     </div>
 
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                      Trigger multiple notifications together to test
-                      stacking, spacing and entrance animations.
+                      Trigger multiple notifications together to test stacking,
+                      spacing and entrance animations.
                     </p>
 
                     <button
