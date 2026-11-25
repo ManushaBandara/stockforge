@@ -1,4 +1,3 @@
-
 import type { TrendingNiche } from "../types/stock-idea.types";
 
 export function buildStockIdeaPrompt(niche: TrendingNiche): string {
@@ -6,66 +5,57 @@ export function buildStockIdeaPrompt(niche: TrendingNiche): string {
 You are a professional stock photography art director,
 AI image prompt engineer and Adobe Stock metadata specialist.
 
-Your task is to create ONE original, commercially useful stock image concept
-based on the selected niche and its research context.
+Create ONE original, commercially useful stock image concept
+based on the selected niche and its supplied research.
 
 SELECTED NICHE:
 ${JSON.stringify(niche, null, 2)}
 
 INSTRUCTIONS:
-
-1. Use the supplied niche research as the primary context.
-2. Create one specific, original visual concept within this niche.
-3. Do not simply repeat the niche name as the concept.
-4. Focus on practical commercial use for designers, advertisers,
-   publishers and businesses.
-5. You may use Google Search to verify or extend relevant information,
-   but do not invent research findings or source URLs.
+- Use the supplied niche research as your primary context.
+- Create one specific, original visual concept.
+- Focus on commercial use for designers, advertisers and businesses.
+- Do not invent research findings, statistics or source URLs.
+- Do not claim to have performed live web searches.
+- Preserve genuine source URLs supplied in the research.
 
 IMAGE GENERATION PROMPT:
-
-Create a detailed, production-ready prompt containing:
+Include:
 - Main subject and visual story.
 - Composition and framing.
 - Environment and background.
 - Lighting and atmosphere.
 - Camera angle and perspective.
-- Color palette.
-- Visual style and realistic details.
-- Suitable negative space when appropriate.
+- Color palette and visual style.
+- Realistic details and suitable negative space.
 
-Avoid:
-- Logos and trademarks.
-- Copyrighted characters.
-- Famous people.
-- Recognizable branded products.
-- Imitating specific living artists.
-- Text, watermarks and signatures.
+Avoid logos, trademarks, copyrighted characters, famous people,
+branded products, living artist imitation, text and watermarks.
 
 ADOBE STOCK METADATA:
 
 TITLE:
-- Clear, accurate and descriptive.
-- Describe the actual proposed visual content.
-- Avoid promotional language and keyword stuffing.
+Write a clear, accurate and descriptive title.
 
 DESCRIPTION:
-- Professionally describe the proposed image.
-- Include the main subject and relevant visual context.
-- Do not claim that an image already exists or has been generated.
+Professionally describe the proposed image concept.
 
 KEYWORDS:
 - Provide 25 to 40 relevant keywords.
-- Put the most important keywords first.
-- Use accurate single words and useful keyword phrases.
-- Avoid duplicates, irrelevant terms, brands and copyrighted names.
+- Put the most important first.
+- Avoid duplicates, irrelevant terms and brands.
 - Do not use hashtags.
 
-OUTPUT:
+TREND RESEARCH:
+- Provide one concise research summary.
+- Return exactly 3 relevant trends.
+- Each trend must contain a name, reason and sources array.
+- Use only source URLs supplied in the selected niche.
+- If no source URL is available, return an empty sources array.
+- Do not fabricate research or URLs.
 
-Return ONLY one valid JSON object.
-Do not use Markdown code fences.
-Do not include explanations outside the JSON.
+OUTPUT:
+Return ONLY valid JSON without Markdown code fences.
 
 Use exactly this structure:
 
@@ -73,18 +63,26 @@ Use exactly this structure:
   "name": "Short and unique concept name",
   "category": "Selected niche category",
   "trendResearch": {
-    "summary": "Summary of the supplied niche research",
+    "summary": "Summary of supplied niche research",
     "trends": [
       {
         "trend": "Relevant trend",
-        "reason": "Why this trend matters for this concept",
-        "sources": [
-          "Source URL from the supplied research"
-        ]
+        "reason": "Why this trend matters",
+        "sources": []
+      },
+      {
+        "trend": "Relevant trend",
+        "reason": "Why this trend matters",
+        "sources": []
+      },
+      {
+        "trend": "Relevant trend",
+        "reason": "Why this trend matters",
+        "sources": []
       }
     ]
   },
-  "imagePrompt": "Detailed image generation prompt",
+  "imagePrompt": "Detailed production-ready image prompt",
   "metadata": {
     "title": "Descriptive stock image title",
     "description": "Accurate stock image description",
@@ -96,11 +94,9 @@ Use exactly this structure:
 }
 
 IMPORTANT:
-- Keep the original niche context.
-- Preserve genuine source URLs from the supplied research.
-- Do not fabricate statistics, demand or sources.
-- Return 25 to 40 keywords.
-- Ensure every JSON field is valid and populated.
+- Return exactly 3 trends.
+- Return 25 to 40 unique keywords.
+- Populate every required field.
 - Return professional English.
 `;
 }
