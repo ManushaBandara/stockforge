@@ -8,6 +8,25 @@
   <em>Create. Organize. Publish.</em>
 </p>
 
+<div align="center">
+<p>
+  <img src="https://img.shields.io/badge/Tauri-2.x-FFC131?style=for-the-badge&logo=tauri&logoColor=white" />
+  <img src="https://img.shields.io/badge/Rust-Latest-CE422B?style=for-the-badge&logo=rust&logoColor=white" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+  <img src="https://img.shields.io/badge/TypeScript-Latest-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite-Latest-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4.x-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/shadcn%2Fui-Latest-000000?style=for-the-badge&logo=shadcnui&logoColor=white" />
+  <img src="https://img.shields.io/badge/Lucide_React-Latest-F75C7E?style=for-the-badge&logo=lucide&logoColor=white" />
+  <img src="https://img.shields.io/badge/SQLite-3.x-003B57?style=for-the-badge&logo=sqlite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Chromium-Latest-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" />
+</p>
+</div>
+
+<div align="center">
+<img src="https://progress-bar.xyz/20/?width=500&color=f44c71&title=Project%20Progress" />
+</div>
+
 **StockForge** is a local-first desktop application designed to streamline and organize the creation, management, and preparation of digital assets for Adobe Stock.
 
 Built with **Tauri 2, Rust, React, and TypeScript**, StockForge combines the performance of a native desktop application with a modern web-based interface. It provides a centralized workspace for managing the entire stock asset production workflow, from asset creation and metadata preparation to organization and submission.
