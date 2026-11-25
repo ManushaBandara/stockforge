@@ -31,6 +31,7 @@ pub fn run() {
             commands::ai::test_gemini_connection,
             commands::stock_ideas::create_stock_idea,
             commands::stock_ideas::get_stock_ideas,
+            commands::metadata_studio::get_metadata_studio_data,
         ])
         .run(tauri::generate_context!())
         .expect("Failed to run StockForge");
