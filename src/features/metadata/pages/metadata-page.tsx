@@ -323,7 +323,7 @@ export default function MetadataPage() {
           onClick={() => setActiveWorkspace("ideas")}
           className={`rounded-lg px-4 py-2 text-xs font-medium transition ${
             activeWorkspace === "ideas"
-              ? "bg-[#302B46] text-[#C5BCFF]"
+              ? "sf-accent-soft text-white"
               : "text-slate-400 hover:bg-[#222630] hover:text-white"
           }`}
         >
@@ -335,7 +335,7 @@ export default function MetadataPage() {
           onClick={() => setActiveWorkspace("manual")}
           className={`rounded-lg px-4 py-2 text-xs font-medium transition ${
             activeWorkspace === "manual"
-              ? "bg-[#302B46] text-[#C5BCFF]"
+              ? "sf-accent-soft text-white"
               : "text-slate-400 hover:bg-[#222630] hover:text-white"
           }`}
         >
@@ -399,7 +399,7 @@ export default function MetadataPage() {
                     type="button"
                     onClick={toggleSelectAll}
                     disabled={missingImageItems.length === 0}
-                    className="text-xs text-[#A99BFF] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    className="text-xs sf-accent-text  transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {missingImageItems.length > 0 &&
                     missingImageItems.every((item) => selectedIds.has(item.id))
@@ -432,7 +432,7 @@ export default function MetadataPage() {
                       <div
                         key={item.id}
                         className={`flex items-start gap-2 rounded-lg p-3 transition ${
-                          isSelected ? "bg-[#302B46]" : "hover:bg-[#222630]"
+                          isSelected ? "sf-accent-soft " : "hover:bg-[#222630]"
                         }`}
                       >
                         {canSelect && (
@@ -441,7 +441,7 @@ export default function MetadataPage() {
                             checked={isChecked}
                             onChange={() => toggleSelection(item)}
                             aria-label={`Select ${item.name} for image generation`}
-                            className="mt-1 size-3.5 shrink-0 accent-[#8B7CFF]"
+                            className="mt-1 size-3.5 shrink-0 sf-accent-soft"
                           />
                         )}
 
