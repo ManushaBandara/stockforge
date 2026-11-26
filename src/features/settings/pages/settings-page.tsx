@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import type { ReactNode } from "react";
 import {
   Settings,
@@ -52,7 +53,7 @@ const DEFAULT_PREFERENCES: AppPreferences = {
   defaultWorkspace: "Overview",
   theme: "Dark",
   accentColor: "violet",
-  storagePath: "D:\\StockForge\\Assets",
+  storagePath: "",
   aiProvider: "Gemini",
   workerLimit: "2",
   retryLimit: "3",
@@ -289,6 +290,24 @@ export default function SettingsPage() {
       });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleBrowseStorageDirectory() {
+    try {
+      const selectedPath = await open({
+        directory: true,
+        multiple: false,
+        title: "Choose asset storage directory",
+      });
+
+      if (typeof selectedPath === "string") {
+        setStoragePath(selectedPath);
+      }
+    } catch (error) {
+      notify.error("Failed to choose storage directory", {
+        description: String(error),
+      });
     }
   }
 
@@ -609,8 +628,11 @@ export default function SettingsPage() {
                     />
 
                     <button
+                      type="button"
                       className={buttonClass}
                       aria-label="Browse storage directory"
+                      onClick={() => void handleBrowseStorageDirectory()}
+                      disabled={saving || loadingPreferences}
                     >
                       <FolderOpen size={16} />
                     </button>
