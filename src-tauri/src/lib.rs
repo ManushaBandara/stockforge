@@ -18,11 +18,28 @@ pub fn run() {
 
             let default_storage_path = app
                 .path()
+                .picture_dir()
+                .map_err(|error| {
+                    std::io::Error::other(format!("Failed to resolve Pictures directory: {error}"))
+                })?
+                .join("StockForge Assets");
+
+            let previous_default_storage_path = app
+                .path()
                 .app_data_dir()
                 .map_err(|error| {
-                    std::io::Error::other(format!("Failed to resolve app data directory: {error}"))
+                    std::io::Error::other(format!(
+                        "Failed to resolve previous storage directory: {error}"
+                    ))
                 })?
                 .join("assets");
+
+            std::fs::create_dir_all(&default_storage_path).map_err(|error| {
+                std::io::Error::other(format!(
+                    "Failed to create default asset directory '{}': {error}",
+                    default_storage_path.display()
+                ))
+            })?;
 
             tauri::async_runtime::block_on(async {
                 let mut preferences =
@@ -35,15 +52,23 @@ pub fn run() {
                         })?
                         .unwrap_or_else(|| serde_json::json!({}));
 
-                let has_storage_path = preferences
+                let saved_path = preferences
                     .get("storagePath")
                     .and_then(serde_json::Value::as_str)
-                    .is_some_and(|path| !path.trim().is_empty());
+                    .filter(|path| !path.trim().is_empty())
+                    .map(std::path::PathBuf::from);
 
-                if !has_storage_path {
+                let should_migrate = saved_path
+                    .as_ref()
+                    .is_some_and(|path| path == &previous_default_storage_path);
+
+                let should_initialize = saved_path.is_none() || should_migrate;
+
+                if should_initialize {
                     if !preferences.is_object() {
                         preferences = serde_json::json!({});
                     }
+
                     preferences["storagePath"] =
                         serde_json::json!(default_storage_path.to_string_lossy().to_string());
 
@@ -51,10 +76,28 @@ pub fn run() {
                         .await
                         .map_err(|error| {
                             std::io::Error::other(format!(
-                                "Failed to initialize app preferences: {error}"
+                                "Failed to initialize asset storage path: {error}"
                             ))
                         })?;
                 }
+
+                let storage_path = if should_initialize {
+                    default_storage_path
+                } else {
+                    saved_path.unwrap()
+                };
+
+                std::fs::create_dir_all(&storage_path).map_err(|error| {
+                    std::io::Error::other(format!(
+                        "Failed to create asset directory '{}': {error}",
+                        storage_path.display()
+                    ))
+                })?;
+
+                println!(
+                    "StockForge asset storage directory: {}",
+                    storage_path.display()
+                );
 
                 Ok::<(), std::io::Error>(())
             })?;
